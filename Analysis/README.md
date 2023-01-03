@@ -19,7 +19,10 @@ gatk SelectVariants -V <input.vcf> --select-type-to-include INDEL --min-indel-si
 
 ## Visualize SVs
 
+###samplot
 
+
+### ribbon
 
 ## Population Frequency
 The Great Genotyper estimate the genotypes for the found variants in 500 cattle samples. We used bcftools to calculate some metrics using the genotypes. Variants at [path] are tagged by the following metadata. 
@@ -46,6 +49,15 @@ or
 bcftools view  -i "INFO/AF <= 0.0001"  <variant.vcf> -o novel.vcf 
 ```
 
+To plot population histogram for specific SV
+```
+ grep <VID> | calculate histogram
+```
+
+To calculate AF for specific breeds
+```
+```
+
 
 
 
@@ -58,3 +70,7 @@ To view novel High impact variants
 bcftools view  -q 0.001 <variant.vcf> | grep "|HIGH|"
 ```
 
+To filter variants affecting specific gene
+```
+bcftools view  -q 0.001 <variant.vcf> | grep "|<GENENAME>|"
+```
