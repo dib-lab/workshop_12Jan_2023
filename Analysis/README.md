@@ -1,4 +1,4 @@
-# Analysis
+# Downstream analysis
 Snakemake workflow will create vcf files containing small and structral variants annotated with their AF and predicted functional impact. Here we are going to go through how to navigate those vcfs.
 
 ## General analysis
