@@ -1,0 +1,856 @@
+pepfile: "project_config.yaml"
+configfile: "config.yaml"
+
+tempFolder = config["tempFolder"]
+outputFolder = config["outputFolder"]
+
+mappingTools = "pbmm2|minimap2|ngmlr|variants"
+
+svCallingTools = config["svCallingTools"]
+
+vep_extra = config["vep"]["extra"]
+vep_plugins = config["vep"]["plugins"]
+
+reference = list(filter(lambda x: x.library == "ref",pep.samples))[0].file[0]
+#reference_repeats=list(filter(lambda x:x.library=="ref_repeats",pep.samples))[0].file[0]
+
+
+bioSamples = dict([(s.sample_name, s.BioSample) for s in pep.samples])
+
+vcfs = []
+
+tmp = list(filter(lambda x: x.library == "graph",pep.samples))
+graphs = [s.sample_name for s in tmp]
+graphs_constraint = "|".join(graphs)
+graphsFiles = {}
+outVcfs = []
+for g in graphs:
+    files = list(filter(lambda x: x.sample_name == g,pep.samples))[0].file
+    graphsFiles[g] = {}
+    for f in files:
+        if ".dbg" == f[-4:]:
+            graphsFiles[g]["graph"] = f
+        elif ".annodbg" == f[-8:]:
+            graphsFiles[g]["annotation"] = f
+        elif ".desc.tsv" == f[-9:]:
+            graphsFiles[g]["desc"] = f
+
+LRSamples = list(filter(lambda x: x.library in ["hifi", "ont"],pep.samples))
+sampleNames = "|".join([s.sample_name for s in LRSamples])
+
+for s in LRSamples:
+    for svTool in svCallingTools:
+        toolName = list(svTool.keys())[0]
+        for mappingTool in svTool[toolName]:
+            if mappingTool == "minimap2" and s.library in ["hifi", "clr"]: mappingTool = "pbmm2"
+            newvcf = "%s%s/annotated/%s.%s.%s.vcf.gz" % (outputFolder, toolName, s.sample_name, s.library, mappingTool)
+            vcfs.append(newvcf)
+            newvcf = "%svariants/annotated/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.library, mappingTool)
+            vcfs.append(newvcf)
+            for g in graphs:
+                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/annotated/merged.vcf.gz" % (g, s.sample_name, s.library, mappingTool)
+                vcfs.append(popVCF)
+
+
+def getBAM(wildcards, calling_tool):
+    tool = wildcards.mapping
+    if tool == "minimap2" and wildcards.tech in ["hifi", "clr"]:
+        tool = "pbmm2"
+    if calling_tool == "sniffles":
+        return "%smapping/%s.phased.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
+    elif calling_tool == "clair3":
+        return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
+    elif calling_tool in ["pbsv", "cuteSV"]:
+        return "%smapping/%s.phased.%s.%s.h%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.h)
+    else:
+        raise Exception("%s not suported please edit getBAM function" % wildcards.calling_tool)
+
+
+def getBAI(wildcards, calling_tool):
+    #print(calling_tool,wildcards,getBAM(wildcards,calling_tool))
+    return getBAM(wildcards,calling_tool) + ".bai"
+
+
+def getFile(wildcards):
+    l = list(filter(lambda x: x.sample_name == wildcards.sample and x.library == wildcards.tech,pep.samples))
+    if len(l) == 0:
+        raise Exception("Cant find %s reads for %s" % (wildcards.tech, wildcards.sample))
+    return l[0].file
+
+
+count = 0
+
+
+def logRule(wildcards, calling_function):
+    res = ""
+    for key, value in wildcards.items():
+        res += (key + ":" + value + " ")
+    print(calling_function,res)
+    return "sample_table.csv"
+
+
+rule all:
+    input:
+        #        outputFolder+"mapping/merged.hifi.flagstat",
+        #	outputFolder+"mapping/merged.hifi.alfred.txt",
+        #        outputFolder+"mapping/merged.ont.flagstat",
+        #	 outputFolder+"mapping/merged.ont.alfred.txt",
+        #        outputFolder+"SURVIVOR/allToolsUnion.all.tsv.gz",
+        vcfs,
+
+#	outputFolder+"svanalyzer/allToolsUnion.all.vcf"
+
+
+rule minimap2_ONT:
+    input:
+        reads=lambda wildcards: getFile(f"{wildcards.sample}"),
+        ref=reference + ".mmi"
+    output:
+        bam=outputFolder + "mapping/{sample}.minimap2.bam",
+        bai=outputFolder + "mapping/{sample}.minimap2.bam.bai"
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "mapping/{sample}.minimap2.log"
+    params:
+        biosample=lambda wildcards: bioSamples[f"{wildcards.sample}"]
+    resources:
+        mem_mb=50000,cores=32
+    threads: 32
+    shell:
+        """
+                mkdir -p {tempFolder}$$/
+		mkdir -p {outputFolder}
+#                cp {input.reads} {input.ref} {tempFolder}$$/
+
+#                inputReads=$(basename {input.reads})
+#               reference=$(basename {input.ref})
+
+		minimap2 -ax map-ont --MD  -t {threads} {tempFolder}$$/$reference {tempFolder}$$/$inputReads   2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
+		samtools index {output.bam}
+ 	#	cp {tempFolder}$$/out.bam {output.bam} 2>> {log}
+	#	cp {tempFolder}$$/out.bam.bai {output.bai} 2>> {log}
+		rm {tempFolder}$$/ -r
+	"""
+
+rule faidx_index:
+    input:
+        ref=reference
+    output:
+        index=reference + ".fai"
+    conda:
+        "envs.yaml"
+    log:
+        reference + ".faidxIndex.log"
+    threads: 1
+    resources:
+        mem_mb=50000,cores=1
+    shell:
+        """
+		samtools faidx {input.ref}  &> {log}
+
+	"""
+
+
+rule pbmm2_index:
+    input:
+        ref=reference
+    output:
+        index=reference + ".mmi"
+    conda:
+        "envs.yaml"
+    log:
+        reference + ".pbmm2Index.log"
+    threads: 1
+    resources:
+        mem_mb=50000,cores=1
+    shell:
+        """
+		pbmm2 index {input.ref}  {output.index} &> {log}
+
+	"""
+
+rule pbmm2:
+    input:
+        reads=lambda wildcards: getFile(wildcards),
+        ref=reference + ".mmi"
+    output:
+        bam=outputFolder + "mapping/{sample}.{tech}.pbmm2.bam",
+        bai=outputFolder + "mapping/{sample}.{tech}.pbmm2.bam.bai"
+    wildcard_constraints:
+        tech="hifi|ont|clr"
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "mapping/{sample}.{tech}.pbmm2.log"
+    params:
+        biosample=lambda wildcards: bioSamples[f"{wildcards.sample}"]
+    resources:
+        mem_mb=50000,cores=32
+    threads: 32
+    shell:
+        """
+                mkdir -p {tempFolder}$$/
+		mkdir -p {outputFolder}
+               # cp {input.reads} {input.ref} {tempFolder}$$/
+
+              #  inputReads=$(basename {input.reads})
+               # reference=$(basename {input.ref})
+	       #		pbmm2 align {input.ref} {input.reads}  --preset HIFI --sample {params.biosample} --rg "@RG\tID:{params.biosample}" 2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
+
+	        pbmm2 align {input.ref} {input.reads} {output.bam} --sort --bam-index BAI --preset HIFI --sample {params.biosample} --rg "@RG\tID:{params.biosample}" 2> {log}  
+		rm {tempFolder}$$/ -r
+	"""
+
+### call small variants
+
+rule clair3:
+    input:
+        bam=lambda wildcards: getBAM(wildcards,"clair3"),
+        bai=lambda wildcards: getBAI(wildcards,"clair3"),
+        ref=reference,
+        refIndex=reference + ".fai"
+    output:
+        vcf=outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.vcf.gz",
+        tbi=outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.vcf.gz.tbi",
+        phasedVcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz",
+        phasedTbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz.tbi",
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.log"
+    threads: 16
+    resources:
+        mem_mb=30000,cores=16
+    shell:
+        """
+		mkdir -p {tempFolder}clair$$/
+	#	singularity pull shub://hkubal/clair3:latest &>> {log}
+
+		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="hifi" --model_path="${{CONDA_PREFIX}}/bin/models/hifi" --enable_phasing --longphase_for_phasing  --longphase=/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
+		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
+		tabix -p vcf {output.vcf}
+		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
+		tabix -p vcf {output.phasedVcf} 
+	#	mv {tempFolder}clair$$/merge_output.vcf.gz {output.vcf}
+	#	mv {tempFolder}clair$$/merge_output.vcf.gz.tbi {output.tbi}
+	#	mv {tempFolder}clair$$/phased_merge_output.vcf.gz {output.phasedVcf}
+	#	mv {tempFolder}clair$$/phased_merge_output.vcf.gz.tbi {output.phasedTbi}
+		rm {tempFolder}clair$$/ -r
+	"""
+
+
+ruleorder: FilterSmallVariants > compressAndIndex
+
+rule FilterSmallVariants:
+    input:
+        vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz",
+        tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz.tbi"
+    output:
+        vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
+        tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.filtered.log"
+    threads: 16
+    resources:
+        mem_mb=30000,cores=16
+    shell:
+        """
+	bcftools view -O z  -f PASS -i 'FMT/PS>=0' {input.vcf} > {output.vcf} 2> {log}
+	tabix -p vcf {output.vcf}	
+	"""
+
+
+rule concatStrucralandSmallVariants:
+    input:
+        small_vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
+        small_tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi",
+        SV_vcf=outputFolder + "pbsv/{sample}.{tech}.{mapping}.vcf.gz",
+        SV_tbi=outputFolder + "pbsv/{sample}.{tech}.{mapping}.vcf.gz.tbi"
+    output:
+        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
+        tbi=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz.tbi"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "variants/{sample}.{tech}.{mapping}.concat.log"
+    threads: 16
+    resources:
+        mem_mb=30000,cores=16
+    shell:
+        """
+	bcftools concat -D  -a -O z {input.SV_vcf} {input.small_vcf} > {output.vcf} 2> {log}
+	tabix -p vcf {output.vcf}	
+	"""
+
+
+### Phase LR
+rule haplotag:
+    input:
+        bam=outputFolder + "mapping/{sample}.{tech}.{tool}.bam",
+        bai=outputFolder + "mapping/{sample}.{tech}.{tool}.bam.bai",
+        phasedVcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{tool}.vcf.gz",
+        phasedTbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{tool}.vcf.gz.tbi",
+        ref=reference
+    output:
+        bam=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam",
+        bai=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam.bai"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        tool=mappingTools,
+        sample=sampleNames
+    params:
+        bamPrefix=outputFolder + "mapping/{sample}.phased.{tech}.{tool}"
+    log:
+        outputFolder + "mapping/longPhase.{sample}.{tool}.{tech}.log"
+    conda:
+        "envs.yaml"
+    threads: 16
+    resources:
+        mem_mb=10000,cores=16
+    shell:
+        """
+		/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 haplotag -s {input.phasedVcf} -b {input.bam}   -t {threads} -o {params.bamPrefix}
+		samtools index {output.bam}
+	"""
+
+
+rule splitHaplotypesBAM:
+    input:
+        bam=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam",
+        bai=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam.bai",
+    output:
+        bam_1=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h0.bam",
+        bai_1=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h0.bam.bai",
+        bam_2=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h1.bam",
+        bai_2=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h1.bam.bai",
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    log:
+        outputFolder + "mapping/{sample}.phased.{tool}.{tech}.log"
+    conda:
+        "envs.yaml"
+    threads: 4
+    resources:
+        mem_mb=5000,cores=4
+    shell:
+        """
+		../tools/splitHaplotypes.sh {input.bam} {output.bam_1} {output.bam_2} 2> {log}
+	"""
+
+
+## pbsv
+
+
+rule discoverSVSignature:
+    input:
+        bam=lambda wildcards: getBAM(wildcards,"pbsv"),
+        bai=lambda wildcards: getBAI(wildcards,"pbsv"),
+    output:
+        outputFolder + "pbsv/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.svsig.gz"
+    conda:
+        "envs.yaml"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    log:
+        outputFolder + "pbsv/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.discovery.log"
+    threads: 1
+    resources:
+        mem_mb=30000,cores=1
+    shell:
+        """
+mkdir -p {outputFolder}pbsv/ 
+pbsv discover -s "{wildcards.sample}_{wildcards.h}" {input.bam} {output} &> {log} 
+     """
+
+ruleorder: haplotag > pbmm2 > clair3 > compressAndIndex > sniffles > splitHaplotypesBAM > discoverSVSignature > svCall > collect_all_haplotypes > combine_haplotypes
+
+# ruleorder: discoverSVSignature > collect_all_haplotypes > combine_haplotypes
+# ruleorder: sniffles > combine_haplotypes
+# ruleorder: clair3 > combine_haplotypes
+# ruleorder: collect_all_haplotypes > combine_haplotypes
+# ruleorder: pbmm2 > haplotag
+rule svCall:
+    input:
+        samples=outputFolder + "pbsv/temp/{sample}.{tech}.{mapping}.h{h}.svsig.gz",
+        ref=reference,
+    output:
+        vcf=outputFolder + "pbsv/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "pbsv/{sample}.{tech}.{mapping}.h{h,[0-9]}.calling.log"
+    threads: 32
+    resources:
+        mem_mb=100000,cores=32
+    shell:
+        """
+mkdir -p {outputFolder}/pbsv/
+pbsv call -j {threads} {input.ref}  {input.samples} {output} &> {log}
+     """
+
+
+rule cleanGT:
+    input:
+        outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h{h}.vcf",
+    output:
+        outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h{h,[0-9]+}.getCleaned.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=50000,
+        runtime_hrs=1,
+        time=lambda wildcards, attempt: 3 * 60 * attempt
+    shell:
+        """
+		grep  -P "^#" {input} > {output}
+		grep  -vP "^#" {input} | cut -f1-8 | awk '{{print $0"\tGT\t1"}}' >> {output}
+
+#         "cat {input}| sed -e 's/GT:[^\t]*/GT/'  | sed -e 's/[0-9]*\/[0-9]*:[^\t]*/1/g' > {output}"
+        """
+
+
+rule collect_all_haplotypes:
+    input:
+        vcf_1=outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h0.getCleaned.vcf.gz",
+        tbi_1=outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h0.getCleaned.vcf.gz.tbi",
+        vcf_2=outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h1.getCleaned.vcf.gz",
+        tbi_2=outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.h1.getCleaned.vcf.gz.tbi",
+    output:
+        outputFolder + "{tool,[A-Za-z0-9]+}/temp/{sample}.{tech}.{mapping}.allHaps.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=50000,
+        runtime_hrs=3,
+        time=lambda wildcards, attempt: 3 * 60 * attempt
+    shell:
+        "bcftools merge -m none --missing-to-ref {input.vcf_1} {input.vcf_2}| python3 ../tools/assign-variant-ids.py > {output}"
+
+
+rule combine_haplotypes:
+    input:
+        haps=outputFolder + "{tool}/temp/{sample}.{tech}.{mapping}.allHaps.vcf",
+    output:
+        outputFolder + "{tool,[A-Za-z0-9]+}/{sample}.{tech}.{mapping}.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=100000,
+        runtime_hrs=10,
+        time=lambda wildcards, attempt: 10 * 60 * attempt
+    shell:
+        'python3 ../tools/merge_vcfs.py combine_columns -samples <(echo -e "{wildcards.sample}\t{wildcards.sample}_0\t{wildcards.sample}_1") -vcf {input.haps} > {output}'
+
+
+rule cuteSVONT:
+    input:
+        bam=outputFolder + "mapping/merged.ont.bam",
+        bai=outputFolder + "mapping/merged.ont.bam.bai",
+        ref=reference
+    output:
+        outputFolder + "cuteSV/variants.ont.vcf"
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "cuteSV/ont.log"
+    threads: 32
+    resources:
+        mem_mb=100000,cores=32
+    shell:
+        """
+		mkdir -p {tempFolder}$$/
+
+		bamName=$(basename {input.bam})
+		cp {input.bam}* {tempFolder}$$/
+		cuteSV --max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL	100 --diff_ratio_merging_DEL 0.3 -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
+		rm {tempFolder}$$/ -r
+	"""
+
+rule cuteSVHIFI:
+    input:
+        bam=lambda wildcards: getBAM(wildcards,"cuteSV"),
+        bai=lambda wildcards: getBAI(wildcards,"cuteSV"),
+        ref=reference
+    output:
+        outputFolder + "cuteSV/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.vcf"
+    conda:
+        "envs.yaml"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    log:
+        outputFolder + "cuteSV/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.log"
+    threads: 32
+    resources:
+        mem_mb=100000,cores=32
+    shell:
+        """
+		mkdir -p {tempFolder}$$/
+
+		bamName=$(basename {input.bam})
+		cp {input.bam}* {tempFolder}$$/
+		cuteSV -S {wildcards.sample}_{wildcards.h} --max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5 -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
+		rm {tempFolder}$$/ -r
+	"""
+
+
+rule sniffles:
+    input:
+        bam=lambda wildcards: getBAM(wildcards,"sniffles"),
+        bai=lambda wildcards: getBAI(wildcards,"sniffles"),
+        ref=reference
+    output:
+        vcf=outputFolder + "sniffles/{sample}.{tech}.{mapping}.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "sniffles/{sample}.{tech}.{mapping}.log"
+    threads: 16
+    resources:
+        mem_mb=30000,cores=16
+    shell:
+        """
+		mkdir -p {outputFolder}/sniffles/
+		mkdir -p {tempFolder}$$/
+
+		cp {input.ref} {tempFolder}$$/
+#		cp {input.bam} {tempFolder}$$/
+		bamName=$(basename {input.bam})
+		refName=$(basename {input.ref})
+
+		samtools calmd -@ {threads} -b {input.bam} {tempFolder}$$/$refName  > {tempFolder}$$/$bamName.md.bam 2> {log}
+		samtools index  {tempFolder}$$/$bamName.md.bam
+
+		sniffles  --phase -t {threads} --input {tempFolder}$$/$bamName.md.bam  --vcf  {output} --reference {input.ref}  &> {log}
+		rm {tempFolder}$$/ -r
+	"""
+
+
+rule annotate_variants:
+    input:
+        calls=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.vcf.gz",
+        cache="../tools/vep/cache",
+        plugins="../tools/vep/plugins"
+    params:
+        plugins=vep_plugins,
+        extra=vep_extra
+    output:
+        calls=report(
+            outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.vcf.gz",
+            caption="report/vcf.rst",
+            category="Calls",
+        ),
+        stats=report(
+            outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.stats.html",
+            caption="report/stats.rst",
+            category="Calls"
+        )
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    log:
+        outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/log"
+    threads: 4
+    wrapper:
+        "0.74.0/bio/vep/annotate"
+
+
+# Pass a list of plugins to use, see https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
+# Plugin args can be added as well, e.g. via an entry "MyPlugin,1,FOO", see docs.
+
+
+rule remove_errors_variants:
+    input:
+        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
+        ref=reference
+    output:
+        outputFolder + "variants/{sample}.{tech}.{mapping}.checked.vcf"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "variants/{sample}.{tech}.{mapping}.checked.log"
+    threads: 1
+    shell:
+        """
+	python ../tools/checkForVCFErrors.py {input.vcf} {input.ref} {output} &> {log}
+	"""
+
+
+rule genotyping:
+    input:
+        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.checked.vcf",
+        ref=reference,
+        graph=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["graph"],
+        annotation=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["annotation"],
+        desc=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["desc"]
+    output:
+        out=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.vcf.gz",
+        outHQ=outputFolder+"variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.HQ.vcf.gz"
+    params:
+        outPrefix=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/{graph}",
+        outFolder=outputFolder+ "variants/GG/{graph}.{sample}.{tech}.{mapping}/"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        mapping=mappingTools,
+        sample=sampleNames,
+        graph=graphs_constraint
+    conda:
+        "envs.yaml"
+    log:
+        outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/log"
+    threads: 32
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=200000,
+        cores=32,
+        nodes=1,
+        time=60 * 48,
+        partition="med2",
+    shell:
+        """
+	rm -f {params.outPrefix}*vcf
+	../tools/PanGenie -g -a {input.annotation} -i {input.graph} -f {input.desc} -j {threads} -t {threads} -r {input.ref} -v {input.vcf} -o {params.outPrefix}  &> {log}
+	mkdir -p  {params.outFolder}
+	ls {params.outPrefix}*.vcf | parallel --gnu -j {threads} 'bcftools view -i "FMT/GQ>=200" -O z -o {params.outFolder}{{/}}.gz {{}} && tabix  -f -p vcf {params.outFolder}{{/}}.gz'
+	ls {params.outPrefix}*.vcf | parallel --gnu -j {threads} 'bgzip -f {{}} && tabix  -f -p vcf {{}}.gz'
+	
+	../tools/populationMerge.sh {output.out} {params.outPrefix}*vcf.gz &>>{log}
+	../tools/populationMerge.sh {output.outHQ} {params.outFolder}*.gz &>>{log}	 
+	"""
+
+
+ruleorder: genotyping > compressAndIndex
+
+##Misc
+
+rule compressAndIndex:
+    input:
+        vcf="{prefix}.vcf",
+    output:
+        vcf="{prefix}.vcf.gz",index="{prefix}.vcf.gz.tbi"
+    conda:
+        "envs.yaml"
+    log: "{prefix}.compressAndIndex.log"
+    resources:
+        mem_mb=3000,cores=1
+    shell:
+        """
+ bgzip -c  {input.vcf} > {input.vcf}.gz 2> {log}
+ tabix -p vcf {input.vcf}.gz
+     """
+
+
+### Merging Results
+
+rule check:
+    input:
+        vcf="{prefix}.vcf",
+        ref=reference
+    output:
+        "{prefix}.checked.vcf"
+    conda:
+        "../envs/survivor.yaml"
+    log: "{prefix}.check.vcf.log"
+    resources:
+        mem_mb=3000,cores=1
+    shell:
+        """
+ /home/mshokrof/sv/vcflib/build/vcfcheck -x -f {input.ref} {input.vcf} > {output} 2> {log}
+     """
+
+
+#ruleorder: check > SurvivorUnion 
+
+# rule SurvivorUnion:
+#     input:
+#         vcfs=vcfs
+#     output:
+#         outputFolder + "SURVIVOR/allToolsUnion.all.vcf"
+#     params: names=vcfsNames
+#     conda:
+#         "../envs/delly.yaml"
+#     log: outputFolder + "SURVIVOR/allToolsUnion.all.vcf.log"
+#     resources:
+#         mem_mb=4000,cores=1
+#     shell:
+#         """
+#     echo {input.vcfs} |tr -s ' ' $'\n' > input.$$.lst
+#      ../SURVIVOR-master/Debug/SURVIVOR merge input.$$.lst 2000 1 1 1 1 50 tmp.$$.vcf &> {log}
+#     bcftools sort -O v -o tmp2.$$.vcf tmp.$$.vcf
+#     echo {params.names} |tr -s ' ' $'\n' > input.$$.names
+#     bcftools reheader -s input.$$.names tmp2.$$.vcf > {output}
+#     rm input.$$.lst	 tmp2.$$.vcf tmp.$$.vcf
+#      """
+
+# rule svAnalyzerUnioin:
+#     input:
+#         vcfs=vcfs,
+#         ref=reference
+#     output:
+#         vcf=outputFolder + "svanalyzer/allToolsUnion.all.vcf",
+#         distances=outputFolder + "svanalyzer/allToolsUnion.distances"
+#     params: names=vcfsNames
+#     conda:
+#         "../envs/svanalyzer.yaml"
+#     log: outputFolder + "svanalyzer/allToolsUnion.all.vcf.log"
+#     resources:
+#         mem_mb=10000,cores=1
+#     shell:
+#         """
+#     mkdir -p {tempFolder}$$/
+#     ls {input.vcfs} >  {tempFolder}$$/source.lst
+#     grep -oP "[^/]*/[^/]*$" {tempFolder}$$/source.lst > {tempFolder}$$/tmp1 2> {log}
+#     cut -f1 tmp1 -d "/" | sed -e "s#^#{tempFolder}$$/#" > 	{tempFolder}$$/folders.lst 2>> {log}
+#     parallel --gnu 'mkdir {{}}' :::: {tempFolder}$$/folders.lst 2>> {log}
+#     paste {tempFolder}$$/source.lst {tempFolder}$$/folders.lst |   xargs -n2 cp
+#     paste -d '/' {tempFolder}$$/folders.lst <(cut -f2 tmp1 -d "/") >  {tempFolder}$$/input.lst 2>> {log}
+#     cp {input.ref} {tempFolder}$$/
+#     refName=$(basename {input.ref})
+#     svanalyzer merge --ref {tempFolder}$$/$refName  --fof {tempFolder}$$/input.lst --prefix {tempFolder}$$/tmp &>> {log}
+#     cat {tempFolder}$$/tmp.log >> {log}
+#     mv {tempFolder}$$/tmp.distances {output.distances}
+#     mv {tempFolder}$$/tmp.clustered.vcf {output.vcf}
+#     rm -rf  {tempFolder}$$/
+#      """
+
+
+# rule convertToMLTSV:
+#     input:
+#         vcf=outputFolder + "SURVIVOR/allToolsUnion.all.vcf",
+#         manta=outputFolder + "manta/merged.illumina.candidateSV.PERCISE.vcf",
+#         delly=outputFolder + "delly/merged.illumina.PERCISE.vcf",
+#         gridss=outputFolder + 'gridss/merged.illumina.filtered.vcf',
+#         pbsv=outputFolder + "pbsv/varints.PERCISE.vcf",
+#         cuteSV=outputFolder + "cuteSV/variants.hifi.PERCISE.vcf",
+#         sniffles=outputFolder + "sniffles/variants.hifi.PERCISE.vcf",
+#     #	 repeats= reference_repeats
+#     output:
+#         training=outputFolder + "SURVIVOR/allToolsUnion.all.tsv.gz"
+#     conda:
+#         "../envs/survivor.yaml"
+#     resources:
+#         mem_mb=4000,cores=1
+#     log: outputFolder + "SURVIVOR/allToolsUnion.all.tsv.log"
+#     shell:
+#         """
+#  python ../createBenchmarkTable.py {input.vcf} svim pbsv cuteSV manta delly gridss  > tmp.$$.tsv 2> {log}
+#  python ../addPbsvSpecificData.py tmp.$$.tsv {input.pbsv} > tmp2.$$.tsv 2>> {log}
+#  python ../addCallerSpecificData.py tmp2.$$.tsv {input.sniffles} sniffles ../snifflesInfoFields ../snifflesSampleFields > tmp3.$$.tsv 2>> {log}
+#  python ../addCallerSpecificData.py tmp3.$$.tsv {input.cuteSV} cuteSV ../cuteVSInfo ../cuteVSExtra > tmp4.$$.tsv 2>> {log}
+#  python ../addCallerSpecificData.py tmp4.$$.tsv {input.manta} manta ../mantaInfo  ../mantaSample > tmp5.$$.tsv 2>> {log}
+#  python ../addCallerSpecificData.py tmp5.$$.tsv {input.delly} delly ../dellyInfo  ../dellySamples > tmp6.$$.tsv 2>> {log}
+#  python ../addCallerSpecificData.py tmp6.$$.tsv {input.gridss} gridss ../gridssInfo  ../gridssSample > tmp7.$$.tsv 2>> {log}
+#  python ../addRepeatAnnotation.py tmp7.$$.tsv {input.repeats} > tmp8.$$.tsv
+#  python ../createTrainingSet.py tmp8.$$.tsv all training  2>> {log} |gzip > {output.training}
+#  rm tmp*.$$.tsv
+#      """
+
+
+### BAM utilities
+
+# rule merge:
+#     input:
+#          samples=lambda wildcards: mergeInput[f"{wildcards.type}"],
+# 	 ref = reference
+#     output:
+#          bam=outputFolder+"mapping/merged.{type}.bam",
+#          bai=outputFolder+"mapping/merged.{type}.bam.bai"
+#     conda:
+#          "envs.yaml"
+#     log:
+#         outputFolder+"mapping/merged.{type}.log"
+#     resources:
+#          mem_mb= 200000, cores =8
+#     threads: 8	 
+#     shell:
+#        	        """
+# 		mkdir -p {tempFolder}$$/		
+# 		cp {input.samples} {tempFolder}$$/
+# 		samtools merge   -O BAM --reference {input.ref} --threads {threads} {output.bam} {tempFolder}$$/*bam &> {log}
+# 		samtools index {output.bam}
+# 		rm {tempFolder}$$/ -r		
+#                 """
+
+
+rule alfredQC:
+    input:
+        bam=outputFolder + "{file}.bam",
+        ref=reference
+    output:
+        tsv=outputFolder + "{file}.alfred.qc.tsv.gz",
+        txt=outputFolder + "{file}.alfred.txt"
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=10000,cores=1
+    log:
+        outputFolder + "{file}.alfred.qc.log"
+    threads: 1
+    shell:
+        """
+     alfred qc -i  -r {input.ref} -o {output.tsv} {input.bam} &> {log}
+zgrep "^ME" {output.tsv} 2>>{log} | datamash transpose  > {output.txt} 2>>{log}
+     """
+
+rule samtoolsStat:
+    input:
+        outputFolder + "{file}.bam"
+    output:
+        outputFolder + "{file}.flagstat"
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=5000,cores=1
+    log:
+        outputFolder + "{file}.pbmm2.flagstat.log"
+    threads: 1
+    shell:
+        """
+samtools flagstat {input} > {output} 2>{log}		
+     """
