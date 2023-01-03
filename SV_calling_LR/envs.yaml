@@ -1,0 +1,20 @@
+channels:
+ - bioconda
+ - conda-forge
+dependencies:
+ - python=3.9.0
+ - numpy=1.23.4
+ - samtools=1.15
+ - clair3=0.1.12
+ - bcftools=1.16
+ - minimap2
+ - pbmm2
+ - pbsv
+ - bamaddrg
+ - sniffles
+ - alfred
+ - datamash
+ - cutesv
+ - pyfaidx
+ - pysam
+ 
