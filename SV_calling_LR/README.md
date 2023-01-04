@@ -1,6 +1,8 @@
 # Summary
 
-Workflow to call, phase and annotate small, and SV from long reads. AF for SV will be annotated using novel population genotyping technique agains 500 cattle sample. 
+Workflow to call, phase and annotate small, and SV from long reads. AF for SV will be annotated using novel population genotyping technique agains 430 cattle samples. 
+
+![worflow_dag](dag.pdf)
 
 Workflow:
   1. map using minmap2
