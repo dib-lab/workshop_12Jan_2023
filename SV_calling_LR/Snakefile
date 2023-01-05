@@ -41,14 +41,16 @@ sampleNames = "|".join([s.sample_name for s in LRSamples])
 for s in LRSamples:
     for svTool in svCallingTools:
         toolName = list(svTool.keys())[0]
+        if toolName == "pbsv" and s.library == "ont":
+            continue
         for mappingTool in svTool[toolName]:
             if mappingTool == "minimap2" and s.library in ["hifi", "clr"]: mappingTool = "pbmm2"
-            newvcf = "%s%s/annotated/%s.%s.%s.vcf.gz" % (outputFolder, toolName, s.sample_name, s.library, mappingTool)
+            newvcf = "%s%s/%s.%s.%s.vcf.gz" % (outputFolder, toolName, s.sample_name, s.library, mappingTool)
             vcfs.append(newvcf)
-            newvcf = "%svariants/annotated/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.library, mappingTool)
+            newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.library, mappingTool)
             vcfs.append(newvcf)
             for g in graphs:
-                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/annotated/merged.vcf.gz" % (g, s.sample_name, s.library, mappingTool)
+                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/merged.vcf.gz" % (g, s.sample_name, s.library, mappingTool)
                 vcfs.append(popVCF)
 
 
@@ -103,15 +105,18 @@ rule all:
 
 rule minimap2_ONT:
     input:
-        reads=lambda wildcards: getFile(f"{wildcards.sample}"),
+        reads=lambda wildcards: getFile(wildcards),
         ref=reference + ".mmi"
     output:
-        bam=outputFolder + "mapping/{sample}.minimap2.bam",
-        bai=outputFolder + "mapping/{sample}.minimap2.bam.bai"
+        bam=outputFolder + "mapping/{sample}.{tech}.minimap2.bam",
+        bai=outputFolder + "mapping/{sample}.{tech}.minimap2.bam.bai"
+    wildcard_constraints:
+        tech="hifi|ont|clr",
+        sample=sampleNames
     conda:
         "envs.yaml"
     log:
-        outputFolder + "mapping/{sample}.minimap2.log"
+        outputFolder + "mapping/{sample}.{tech}.minimap2.log"
     params:
         biosample=lambda wildcards: bioSamples[f"{wildcards.sample}"]
     resources:
@@ -121,15 +126,8 @@ rule minimap2_ONT:
         """
                 mkdir -p {tempFolder}$$/
 		mkdir -p {outputFolder}
-#                cp {input.reads} {input.ref} {tempFolder}$$/
-
-#                inputReads=$(basename {input.reads})
-#               reference=$(basename {input.ref})
-
-		minimap2 -ax map-ont --MD  -t {threads} {tempFolder}$$/$reference {tempFolder}$$/$inputReads   2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
+		minimap2 -ax map-ont --MD  -t {threads} {input.ref} {input.reads}   2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
 		samtools index {output.bam}
- 	#	cp {tempFolder}$$/out.bam {output.bam} 2>> {log}
-	#	cp {tempFolder}$$/out.bam.bai {output.bai} 2>> {log}
 		rm {tempFolder}$$/ -r
 	"""
 
@@ -204,6 +202,11 @@ rule pbmm2:
 
 ### call small variants
 
+clair3Models={
+	"hifi": "hifi",
+	"ont": "r941_prom_hac_g360+g422"
+}
+
 rule clair3:
     input:
         bam=lambda wildcards: getBAM(wildcards,"clair3"),
@@ -219,19 +222,21 @@ rule clair3:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
+    params:
+        model= lambda wildcards:  clair3Models[f"{wildcards.tech}"]
     conda:
         "envs.yaml"
     log:
         outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.log"
-    threads: 16
+    threads: 32
     resources:
-        mem_mb=30000,cores=16
+        mem_mb=30000,cores=32
     shell:
         """
 		mkdir -p {tempFolder}clair$$/
 	#	singularity pull shub://hkubal/clair3:latest &>> {log}
 
-		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="hifi" --model_path="${{CONDA_PREFIX}}/bin/models/hifi" --enable_phasing --longphase_for_phasing  --longphase=/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
+		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
 		tabix -p vcf {output.vcf}
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
@@ -275,8 +280,8 @@ rule concatStrucralandSmallVariants:
     input:
         small_vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
         small_tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi",
-        SV_vcf=outputFolder + "pbsv/{sample}.{tech}.{mapping}.vcf.gz",
-        SV_tbi=outputFolder + "pbsv/{sample}.{tech}.{mapping}.vcf.gz.tbi"
+        SV_vcf=outputFolder + "sniffles/{sample}.{tech}.{mapping}.vcf.gz",
+        SV_tbi=outputFolder + "sniffles/{sample}.{tech}.{mapping}.vcf.gz.tbi"
     output:
         vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
         tbi=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz.tbi"
@@ -293,7 +298,7 @@ rule concatStrucralandSmallVariants:
         mem_mb=30000,cores=16
     shell:
         """
-	bcftools concat -D  -a -O z {input.SV_vcf} {input.small_vcf} > {output.vcf} 2> {log}
+	bcftools concat -D  -a -O z -o {output.vcf} {input.SV_vcf} {input.small_vcf} 2> {log}
 	tabix -p vcf {output.vcf}	
 	"""
 
@@ -477,37 +482,22 @@ rule combine_haplotypes:
         'python3 ../tools/merge_vcfs.py combine_columns -samples <(echo -e "{wildcards.sample}\t{wildcards.sample}_0\t{wildcards.sample}_1") -vcf {input.haps} > {output}'
 
 
-rule cuteSVONT:
-    input:
-        bam=outputFolder + "mapping/merged.ont.bam",
-        bai=outputFolder + "mapping/merged.ont.bam.bai",
-        ref=reference
-    output:
-        outputFolder + "cuteSV/variants.ont.vcf"
-    conda:
-        "envs.yaml"
-    log:
-        outputFolder + "cuteSV/ont.log"
-    threads: 32
-    resources:
-        mem_mb=100000,cores=32
-    shell:
-        """
-		mkdir -p {tempFolder}$$/
+	
+cuteSVParams={
+	"hifi": "	--max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5",
+	"clr":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 200 --diff_ratio_merging_DEL 0.5",
+	"ont":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3"
+}
 
-		bamName=$(basename {input.bam})
-		cp {input.bam}* {tempFolder}$$/
-		cuteSV --max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL	100 --diff_ratio_merging_DEL 0.3 -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
-		rm {tempFolder}$$/ -r
-	"""
-
-rule cuteSVHIFI:
+rule cuteSV:
     input:
         bam=lambda wildcards: getBAM(wildcards,"cuteSV"),
         bai=lambda wildcards: getBAI(wildcards,"cuteSV"),
         ref=reference
     output:
         outputFolder + "cuteSV/temp/{sample}.{tech}.{mapping}.h{h,[0-9]}.vcf"
+    params:
+        lambda wildcards: cuteSVParams[f"{wildcards.tech}"]
     conda:
         "envs.yaml"
     wildcard_constraints:
@@ -525,7 +515,7 @@ rule cuteSVHIFI:
 
 		bamName=$(basename {input.bam})
 		cp {input.bam}* {tempFolder}$$/
-		cuteSV -S {wildcards.sample}_{wildcards.h} --max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5 -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
+		cuteSV -S {wildcards.sample}_{wildcards.h} {params} -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
 		rm {tempFolder}$$/ -r
 	"""
 
@@ -549,7 +539,7 @@ rule sniffles:
     resources:
         mem_mb=30000,cores=16
     shell:
-        """
+        r"""
 		mkdir -p {outputFolder}/sniffles/
 		mkdir -p {tempFolder}$$/
 
@@ -561,7 +551,11 @@ rule sniffles:
 		samtools calmd -@ {threads} -b {input.bam} {tempFolder}$$/$refName  > {tempFolder}$$/$bamName.md.bam 2> {log}
 		samtools index  {tempFolder}$$/$bamName.md.bam
 
-		sniffles  --phase -t {threads} --input {tempFolder}$$/$bamName.md.bam  --vcf  {output} --reference {input.ref}  &> {log}
+		sniffles  --phase -t {threads} --input {tempFolder}$$/$bamName.md.bam  --vcf {tempFolder}$$/out.vcf --reference {input.ref}  &>> {log}
+
+		bcftools reheader --samples <(echo {wildcards.sample}) {tempFolder}$$/out.vcf  > {tempFolder}$$/out2.vcf 2>> {log}
+		bcftools +fill-from-fasta {tempFolder}$$/out2.vcf -- -c REF -f {input.ref}  |sed -e 's/\([01]\)\/\([01]\)/\1|\2/'  > {tempFolder}$$/out3.vcf  2>> {log}
+		python ../tools/fixSurvivor.py  {tempFolder}$$/out3.vcf {output.vcf}
 		rm {tempFolder}$$/ -r
 	"""
 

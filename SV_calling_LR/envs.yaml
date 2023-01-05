@@ -16,5 +16,5 @@ dependencies:
  - datamash
  - cutesv
  - pyfaidx
+ - truvari=3.5.0
  - pysam
- 
