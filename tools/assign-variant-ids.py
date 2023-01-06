@@ -1,6 +1,8 @@
 import sys
 from variantclassifier import determine_class_from_line
 
+prefix=sys.argv[1]
+
 prev_chrom = ''
 prev_pos = ''
 
@@ -25,7 +27,7 @@ for line in sys.stdin:
 		counter += 1
 	else:
 		counter = 0
-	var_id = '-'.join([chrom, start, vartype, str(counter), str(length)])
+	var_id = '-'.join([prefix,chrom, start, vartype, str(counter), str(length)])
 	fields[2] = var_id
 	prev_chrom = chrom
 	prev_pos = start
