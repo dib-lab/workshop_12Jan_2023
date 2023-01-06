@@ -18,3 +18,6 @@ dependencies:
  - pyfaidx
  - truvari=3.5.0
  - pysam
+ - survivor=1.0.7
+ - svanalyzer=0.36
+ - samplot
