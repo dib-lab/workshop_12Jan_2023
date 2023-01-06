@@ -17,7 +17,8 @@ reference_rmsk = list(filter(lambda x: x.library == "rmsk",pep.samples))[0].file
 
 
 goldStandardBED=list(filter(lambda x: x.library == "gold_bed",pep.samples))[0].file[0]
-
+goldStandardVCF=list(filter(lambda x: x.library == "gold_vcf",pep.samples))[0].file[0]
+ 
 bioSamples = dict([(s.sample_name, s.BioSample) for s in pep.samples])
 
 vcfs = []
@@ -45,6 +46,8 @@ mergeVCFs={}
 plotBams=[]
 plotNames=[]
 
+callingNames=["svanalyzer"]
+
 for s in LRSamples:
 #    vcfs.append("%sSURVIVOR/%s.vcf.gz" % (outputFolder, s.sample_name))
     vcfs.append("%ssvanalyzer/%s.vcf.gz" % (outputFolder, s.sample_name))
@@ -54,6 +57,7 @@ for s in LRSamples:
     }
     for svTool in svCallingTools:
         toolName = list(svTool.keys())[0]
+	callingNames.append(toolName)
         if toolName == "pbsv" and s.library == "ont":
             continue
         for mappingTool in svTool[toolName]:
@@ -76,6 +80,7 @@ for s in LRSamples:
                 popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/merged.vcf.gz" % (g, s.sample_name, s.library, mappingTool)
                 vcfs.append(popVCF)
 
+callingNames= "|".join(callingNames)
 
 def getBAM(wildcards, calling_tool):
     tool = wildcards.mapping
@@ -917,4 +922,35 @@ rule samplot:
     shell:
         """
 	samplot plot -n {params.names}  -b {input.bams}   -o {output}  -c {wildcards.chrom} -s {wildcards.start}  -e {wildcards.end} -w {params.window} -t {wildcards.SVTYPE}  -T {input.gff} -A {input.rmsk} {input.goldStandard}  -H 6 -W 6 --annotation_scalar 2 &> {log}
+        """
+
+
+
+rule benchmarkSV:
+    input:
+        vcf=outputFolder+ "{tool}/{options}.vcf.gz",
+	ref=reference,
+	goldStandard=goldStandardVCF,
+	goldStandardIndex=goldStandardVCF+".tbi"
+    output:
+        outputFolder+ "benchmarks/{tool}.{options}/summary.txt"
+    params:
+        outFolder = outputFolder+ "benchmarks/{tool}.{options}/"
+    wildcard_constraints:
+        tool=callingNames        
+    #     tech="hifi|ont|clr",
+    #     mapping=mappingTools,
+    #     sample=sampleNames,
+    #     phase="phased|unphased"
+    conda:
+        "envs.yaml"
+    resources:
+        mem_mb=5000,cores=1
+    log:
+        outputFolder + "benchmarks/{tool}.{options}.log"
+    threads: 1
+    shell:
+        """
+	rm -rf {params.outFolder}
+	truvari bench -b {input.goldStandard} -c {input.vcf}  -o {params.outFolder} --passonly  -r 2000 -C 3000  --reference {input.ref} &> {log}
         """

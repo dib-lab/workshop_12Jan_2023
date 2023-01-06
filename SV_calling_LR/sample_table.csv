@@ -3,6 +3,7 @@ ucd1.2,ref,Hereford,HEREFORD
 ucd1.2_gff,gff,Hereford,HEREFORD
 ucd1.2_rmsk,rmsk,Hereford,HEREFORD
 goldbed,gold_bed,NelloreXBrown_Swiss,SAMEA7765441
+goldvcf,gold_vcf,NelloreXBrown_Swiss,SAMEA7765441
 ERR5043144.chr25,hifi,NelloreXBrown_Swiss,SAMEA7765441 
 ERR7091271.chr25,ont,NelloreXBrown_Swiss,SAMEA7765441
 cattle_taurus_10,graph

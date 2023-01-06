@@ -3,6 +3,7 @@ ucd1.2,../data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ucd1.2_rmsk,../data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
 ucd1.2_gff,../data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
 goldbed,../data/goldstandard/callset_filered.25.bed.gz
+goldvcf,../data/goldstandard/callset_filered.25.vcf.gz
 ERR5043144.chr25,../data/NxB.HIFI.chr25.fastq.gz
 ERR7091271.chr25,../data/ERR7091271.25.fastq.gz
 cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.dbg
