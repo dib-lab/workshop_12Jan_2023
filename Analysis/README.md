@@ -22,6 +22,8 @@ gatk SelectVariants -V <input.vcf> --select-type-to-include INDEL --min-indel-si
 ###samplot
 
 
+
+
 ### ribbon
 
 ## Population Frequency
@@ -55,6 +57,10 @@ To plot population histogram for specific SV
 ```
 
 To calculate AF for specific breeds
+```
+```
+
+To view sample names having a specific variants
 ```
 ```
 
