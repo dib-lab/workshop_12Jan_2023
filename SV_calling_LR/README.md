@@ -1,6 +1,9 @@
 # 1) Intro
 We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore.  We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
 
+## Aims
+
+
 # 2) Significance 
 * Novel way of calculating Population AF without needing  databases like genomAD, and more accurate too.
 * Variants will be richly annotated with AF and functional impact making it perfect for studying functional impact of the SVs.
@@ -153,10 +156,40 @@ snakemake  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/ann
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 
-## 6.6 Lets Map the reads
+## 6.6 Workflow basics
+
+* The commands to run the workflow consists of two parts: running mode, and output files path.
+* running mode can be either 
+    * "-np" instructs snakemake to print the commands and parameters without running anything  
+    * "-j 8" instructs snakemake to run the script using 16 threads
+* outpath files path follow the pattern "<step>/<sample_name>.<sample_type>.<mapping_tool>.<phasing status>.<extension>"
+    * <step> is the name of the current step to be running. step options are mapping, clair3, cuteSV, sniffles, pbsv, samplot, and benchmark
+    * <sample_name> can be one of the name of sequencing samples specified in sample_table.csv. In our case, ERR5043144 or ERR7091271.
+    * <sample_type> can be either "ont" or "hifi"
+    * <mapping_tool> can be either "minimap2" or "pbmm2"
+    * <phasing status> can be either "phased" or "unphased"
+    * <extension> can be ".vcf", "bam", or "gz".
+```
+  # print commands to map ERR5043144  using pbmm2
+   snakemake results/mapping/ERR5043144.hifi.pbmm2.bam -np
+  
+  # print commands to map ERR5043144  using pbmm2 and add haplotag(H0,H1) to the reads
+   snakemake results/mapping/ERR5043144.hifi.pbmm2.phased.bam -np
+  
+  # print commands to map ERR7091271 sample using minimap2
+  snakemake results/mapping/ERR7091271.ont.minimap2.bam -np
+  
+```
+  
+* Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you cant follow up the workshop pace, just run the current command and snakemake will catch up. 
+
+  
+
+## 6.6 Lets map the reads using minimap2
+  
 First, Lets look at how the worklfow is going to map the ONT reads
 ```
-snakemake -np results/LR_calling/mapping/ERR7091271.chr25.ont.minimap2.bam
+snakemake -np results/mapping/ERR7091271.chr25.ont.minimap2.bam
 ```
 As you can see, the workflow will start by creating index for the reference genome and then used it to map the reads. 
 to actually run the command remove "-np" from the previous command and add '-j16' instead. Snakemake will use 16 threads to run the steps
@@ -164,21 +197,21 @@ to actually run the command remove "-np" from the previous command and add '-j16
 ## 6.7 use Clair3 to call and phase small variants
 
 ```
-snakemake -j16 results/LR_calling/small_variants/clair3/ERR7091271.chr25.ont.minimap2.vcf.gz
+snakemake -j16 results/small_variants/clair3/ERR7091271.chr25.ont.minimap2.vcf.gz
 ```
 
 
 ##  6.8 call SV useing cuteSV
 
 ```
-snakemake -j 16 results/LR_calling/cuteSV/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
+snakemake -j 16 results/cuteSV/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
 ```
 
 ##  6.9 Benchmark the results
 
 ```
-snakemake -j 16  results/LR_calling/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
-cat results/LR_calling/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+snakemake -j 16  results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+cat results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
 ```
 
 
