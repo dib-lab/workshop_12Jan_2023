@@ -61,8 +61,8 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
   3. split the reads into two haplotypes
   4. call SV using pbsv, sniffles, cuteSV
   5. merge the small and structrual variants
-  6. annotate the vcf using Variant effect predictor
-  7. calculate AF using the great genotyper
+  6. calculate AF using the great genotyper
+  7. annotate the vcf using Variant effect predictor
 
 ![worflow_dag](dag.png)
 
@@ -76,14 +76,14 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
 git clone git@github.com:dib-lab/workshop_12Jan_2023.git
 cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
-3. create the conda environment and install the tools
+2. create the conda environment and install the tools
 ```
 conda install mamba -n base -c conda-forge
 mamba env create -f envs.yaml
 conda activate cattle_sv
 ```
 
-4. make sure that you can access the input files
+3. make sure that you can access the input files
 
 ```
   ls -lsah /home/mshokrof/workshop_12Jan_2023_data/*
