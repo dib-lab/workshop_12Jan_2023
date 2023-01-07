@@ -1,9 +1,1 @@
 sample_name,sample_type,BioSample
-ucd1.2,ref,SAMN03145444
-ucd1.2_gff,gff,SAMN03145444
-ucd1.2_rmsk,rmsk,SAMN03145444
-goldbed,gold_bed,SAMEA7765441
-goldvcf,gold_vcf,SAMEA7765441
-ERR5043144,hifi,SAMEA7765441 
-ERR7091271,ont,SAMEA7765441
-cattle_taurus_10,graph,COHORT

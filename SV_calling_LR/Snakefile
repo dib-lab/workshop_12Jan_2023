@@ -15,10 +15,16 @@ reference = list(filter(lambda x: x.sample_type == "ref",pep.samples))[0].file[0
 reference_gff = list(filter(lambda x: x.sample_type == "gff",pep.samples))[0].file[0]
 reference_rmsk = list(filter(lambda x: x.sample_type == "rmsk",pep.samples))[0].file[0]
 
+goldFiles=list(filter(lambda x: x.sample_type == "gold",pep.samples))[0].file
+for f in goldFiles:
+    if f[-7:]==".bed.gz":
+        goldStandardBED=f
+    elif f[-7:]==".vcf.gz": 
+        goldStandardVCF=f
+    else:
+        raise Exception("Unexpected file format in gold standard. Supported formats bed.gz and vcf.gz")
 
-goldStandardBED=list(filter(lambda x: x.sample_type == "gold_bed",pep.samples))[0].file[0]
-goldStandardVCF=list(filter(lambda x: x.sample_type == "gold_vcf",pep.samples))[0].file[0]
- 
+
 bioSamples = dict([(s.sample_name, s.BioSample) for s in pep.samples])
 
 vcfs = []
