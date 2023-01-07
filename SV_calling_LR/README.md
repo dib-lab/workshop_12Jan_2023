@@ -149,7 +149,7 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 ## 6.5 Make sure that configuration is correct
 run the following command
 ```
-snakemake  -np  results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+snakemake  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/annotated/merged.vcf.gz
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 
