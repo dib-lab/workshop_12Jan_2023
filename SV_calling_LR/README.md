@@ -1,8 +1,30 @@
 # Intro
-We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore. First, We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
+We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore.  We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
 
-We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: First, We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1. Second, the sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  Lastly, we  created a downsampled the data for the sake of the workshope. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples). 
+# Significance 
+* Novel way of calculating Population AF without needing  databases like genomAD, and more accurate too.
+* Variants will be richly annotated with AF and functional impact making it perfect for studying functional impact of the SVs.
+* Workflow is benchmarked on cattle data and achiving accurcy of ~ 90%.
+* Workflow is implemented using snakemake to make it simpler to run it afterward with your data and tweak it as you want.
 
+# Terminology
+* haplotype-resolved assembly:
+* Structrual Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
+* Phasing variant
+* Population Allele frequency
+* Pacbio
+* Oxford
+* Snakemake
+* Variant calling
+* genotyping
+* Population genotyping 
+
+
+
+# Data Description 
+We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: 
+1. We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
+2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  
 
 |![compare](https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs13059-019-1828-7/MediaObjects/13059_2019_1828_Fig2_HTML.png?as=webp)|
 |:--:|
@@ -10,10 +32,7 @@ We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB4233
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
 |
 
-
-
-# Data Description 
-Test Input data for the workshop can be downloaded from the following link. 
+Test Input data for the workshop can be downloaded from the following link and they are available on farm on 
 
 The follwoing table describes the downloaded files 
 | file        |  Description  |
@@ -32,6 +51,7 @@ The follwoing table describes the downloaded files
 | cattle_bostgroup_10 |  Folder contains Kmer indexes of 10  boison samples|
 | cattle_bosgroup_10/graph.desc.tsv |  file contains the Biosample ids|
 
+we  created a downsampled the data for the sake of the workshope. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples).
 
 # Workflow:
 
