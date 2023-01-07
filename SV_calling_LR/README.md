@@ -26,7 +26,7 @@ We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB4233
 1. We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
 2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  
 
-|![compare](https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs13059-019-1828-7/MediaObjects/13059_2019_1828_Fig2_HTML.png?as=webp)|
+|![compare](sv_callers.jpg)|
 |:--:|
 |Figure 1: Comparison of different methods
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
