@@ -68,7 +68,7 @@ for s in LRSamples:
             continue
         for mappingTool in svTool[toolName]:
             if mappingTool == "minimap2" and s.sample_type in ["hifi", "clr"]: mappingTool = "pbmm2"
-            newBam="%smapping/%s.phased.%s.%s.bam" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
+            newBam="%smapping/%s.%s.%s.phased.bam" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
             if newBam  not in plotBams:
                 plotBams.append(newBam)
                 plotNames.append("%s.%s.%s" % (s.sample_name, s.sample_type, mappingTool))
@@ -93,13 +93,13 @@ def getBAM(wildcards, calling_tool):
     if tool == "minimap2" and wildcards.tech in ["hifi", "clr"]:
         tool = "pbmm2"
     if calling_tool == "sniffles":
-        return "%smapping/%s.phased.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
+        return "%smapping/%s.%s.%s.phased.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool == "clair3":
         return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool in ["pbsv", "cuteSV"]:
         if wildcards.phase == "unphased":
             return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
-        return "%smapping/%s.phased.%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.phase)
+        return "%smapping/%s.%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.phase)
     else:
         raise Exception("%s not suported please edit getBAM function" % wildcards.calling_tool)
 
@@ -237,10 +237,10 @@ rule clair3:
         ref=reference,
         refIndex=reference + ".fai"
     output:
-        vcf=outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.vcf.gz",
-        tbi=outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.vcf.gz.tbi",
-        phasedVcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz",
-        phasedTbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz.tbi",
+        vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz",
+        tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz.tbi",
+        phasedVcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz",
+        phasedTbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi",
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -250,7 +250,7 @@ rule clair3:
     conda:
         "envs.yaml"
     log:
-        outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.log"
+        outputFolder + "clair3/{sample}.{tech}.{mapping}.log"
     threads: 32
     resources:
         mem_mb=30000,cores=32
@@ -270,11 +270,11 @@ ruleorder: FilterSmallVariants > compressAndIndex
 
 rule FilterSmallVariants:
     input:
-        vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz",
-        tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.vcf.gz.tbi"
+        vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz",
+        tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi"
     output:
-        vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
-        tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi"
+        vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz",
+        tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz.tbi"
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -282,7 +282,7 @@ rule FilterSmallVariants:
     conda:
         "envs.yaml"
     log:
-        outputFolder + "small_variants/clair3/{sample}.{tech}.{mapping}.filtered.log"
+        outputFolder + "clair3/{sample}.{tech}.{mapping}.filtered.log"
     threads: 16
     resources:
         mem_mb=30000,cores=16
@@ -295,8 +295,8 @@ rule FilterSmallVariants:
 
 rule concatStrucralandSmallVariants:
     input:
-        small_vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
-        small_tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi",
+        small_vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz",
+        small_tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz.tbi",
         SV_vcf=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz",
         SV_tbi=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi"
     output:
@@ -325,18 +325,18 @@ rule haplotag_longphase:
     input:
         bam=outputFolder + "mapping/{sample}.{tech}.{tool}.bam",
         bai=outputFolder + "mapping/{sample}.{tech}.{tool}.bam.bai",
-        phasedVcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{tool}.vcf.gz",
-        phasedTbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{tool}.vcf.gz.tbi",
+        phasedVcf=outputFolder + "clair3/{sample}.{tech}.{tool}.phased.vcf.gz",
+        phasedTbi=outputFolder + "clair3/{sample}.{tech}.{tool}.phased.vcf.gz.tbi",
         ref=reference
     output:
-        bam=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam",
-        bai=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam.bai"
+        bam=outputFolder + "mapping/{sample}.{tech}.{tool}.phased.bam",
+        bai=outputFolder + "mapping/{sample}.{tech}.{tool}.phased.bam.bai"
     wildcard_constraints:
         tech="hifi|ont|clr",
         tool=mappingTools,
         sample=sampleNames
     params:
-        bamPrefix=outputFolder + "mapping/{sample}.phased.{tech}.{tool}"
+        bamPrefix=outputFolder + "mapping/{sample}.{tech}.{tool}.phased"
     log:
         outputFolder + "mapping/longPhase.{sample}.{tool}.{tech}.log"
     conda:
@@ -353,13 +353,13 @@ rule haplotag_longphase:
 
 rule splitHaplotypesBAM:
     input:
-        bam=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam",
-        bai=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.bam.bai",
+        bam=outputFolder + "mapping/{sample}.{tech}.{tool}.phased.bam",
+        bai=outputFolder + "mapping/{sample}.{tech}.{tool}.phased.bam.bai",
     output:
-        bam_1=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h0.bam",
-        bai_1=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h0.bam.bai",
-        bam_2=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h1.bam",
-        bai_2=outputFolder + "mapping/{sample}.phased.{tech}.{tool}.h1.bam.bai",
+        bam_1=outputFolder + "mapping/{sample}.{tech}.{tool}.h0.bam",
+        bai_1=outputFolder + "mapping/{sample}.{tech}.{tool}.h0.bam.bai",
+        bam_2=outputFolder + "mapping/{sample}.{tech}.{tool}.h1.bam",
+        bai_2=outputFolder + "mapping/{sample}.{tech}.{tool}.h1.bam.bai",
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -412,7 +412,7 @@ rule discoverSVSignature:
 		pbsv discover -s "{params.sample}" {input.bam} {output} &> {log} 
         """
 
-ruleorder: haplotag > pbmm2 > clair3 > compressAndIndex > sniffles > splitHaplotypesBAM > discoverSVSignature > svCall  > combine_haplotypes
+ruleorder: haplotag_longphase > pbmm2 > clair3 > compressAndIndex > sniffles > splitHaplotypesBAM > discoverSVSignature > svCall  > combine_haplotypes
 
 # ruleorder: discoverSVSignature > collect_all_haplotypes > combine_haplotypes
 # ruleorder: sniffles > combine_haplotypes
