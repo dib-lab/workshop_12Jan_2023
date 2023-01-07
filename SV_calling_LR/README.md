@@ -63,7 +63,8 @@ The workflow expects the input files to be stored in samples_table.csv and subsa
 1. change the outputFolder to desired output folder. We can choose "results/"
 2. change the tempFolder to desired temporary folder. We can choose "scratch/"
 ## Edit sample_table.csv
-we are going to define 7 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample, and hifi sample.
+we are going to define 7 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample, and hifi sample. 
+
 The file should be like the following:
 ```
 sample_name,library,Breed,BioSample
@@ -75,6 +76,8 @@ goldvcf,gold_vcf,NelloreXBrown_Swiss,SAMEA7765441
 ERR5043144.chr25,hifi,NelloreXBrown_Swiss,SAMEA7765441
 ERR7091271.chr25,ont,NelloreXBrown_Swiss,SAMEA7765441
 ```
+Make sure that you specify the library correctly because it changes how the execution of the workflow. For example, specifying ERR5043144.chr25 as hifi will change the mapping tool to pbmm2 and calling parameters in cuteSV.
+
 
 ## Edit subsample_table.csv
 we are going to specify the files for each dataset. write the file paths of the downloaded data 
@@ -94,9 +97,63 @@ cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10
 ```
 
 ## Make sure that configurationa is correct
-run the following command and 
+run the following command
+```
+snakemake  -np  ../results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+```
+you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 
-4. add your samples names and sequencing technology to sample_table.csv
-5. add samples files to subsample_table.csv
-6. add outputfolder to config.yaml
-7. run using snakemake -j16 --use-conda
+## Lets Map the reads
+First, Lets look at how the worklfow is going to map the ONT reads
+```
+snakemake -np results/LR_calling/mapping/ERR7091271.chr25.ont.minimap2.bam
+```
+As you can see, the workflow will start by creating index for the reference genome and then used it to map the reads. 
+to actually run the command remove "-np" from the previous command and add '-j16' instead. Snakemake will use 16 threads to run the steps
+
+## use Clair3 to call and phase small variants
+
+```
+snakemake -j16 results/LR_calling/small_variants/clair3/ERR7091271.chr25.ont.minimap2.vcf.gz
+```
+
+
+## call SV useing cuteSV
+
+```
+snakemake -j 16 results/LR_calling/cuteSV/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
+```
+
+## Benchmark the results
+
+```
+snakemake -j 16  results/LR_calling/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+cat results/LR_calling/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+```
+
+
+## calcualte AF
+
+```
+snakemake -j 16 results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/merged.vcf.gz
+```
+
+## annotate using VEP
+```
+snakemake -j 16 results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+```
+
+
+## plot a SV
+Lets first get high impact variant
+```
+zgrep "|HIGH|" results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz 
+```
+
+lets visualize 
+```
+snakemake -np ../results/LR_calling/samplot/DEL_25_41669173_41669210.png
+```
+
+
+
