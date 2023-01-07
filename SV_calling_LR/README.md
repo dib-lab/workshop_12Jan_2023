@@ -14,7 +14,8 @@ Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ.
 
 # Data Description 
 Test Input data for the workshop can be downloaded from the following link. 
-Data description is
+
+The follwoing table describes the downloaded files 
 | file        |  Description  |
 |:-------------:|:-------------|
 | ARS-UCD1.2_Btau5.0.1Y.25.fa | Chromosome 25 from ARS-UCD1.2 genome|
