@@ -26,7 +26,7 @@ We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB4233
 1. We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
 2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  
 
-|![compare](https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs13059-019-1828-7/MediaObjects/13059_2019_1828_Fig2_HTML.png?as=webp)|
+|![compare](sv_callers.jpg)|
 |:--:|
 |Figure 1: Comparison of different methods
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
@@ -61,8 +61,8 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
   3. split the reads into two haplotypes
   4. call SV using pbsv, sniffles, cuteSV
   5. merge the small and structrual variants
-  6. annotate the vcf using Variant effect predictor
-  7. calculate AF using the great genotyper
+  6. calculate AF using the great genotyper
+  7. annotate the vcf using Variant effect predictor
 
 ![worflow_dag](dag.png)
 
@@ -76,14 +76,14 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
 git clone git@github.com:dib-lab/workshop_12Jan_2023.git
 cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
-3. create the conda environment and install the tools
+2. create the conda environment and install the tools
 ```
 conda install mamba -n base -c conda-forge
 mamba env create -f envs.yaml
 conda activate cattle_sv
 ```
 
-4. make sure that you can access the input files
+3. make sure that you can access the input files
 
 ```
   ls -lsah /home/mshokrof/workshop_12Jan_2023_data/*
@@ -130,26 +130,26 @@ Make sure that you specify the sample_type correctly because it changes executio
 
 
 ## 6.4 Edit subsample_table.csv
-we are going to specify the files for each dataset. write the file paths of the downloaded data 
-The file should be like the following:
+we are going to specify the files for each dataset. 
+open subsample_table.csv using emacs and  copy paste the following lines under header line
+
 ```
-sample_name,file
-ucd1.2,../data/ARS-UCD1.2_Btau5.0.1Y.25.fa
-ucd1.2_rmsk,../data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
-ucd1.2_gff,../data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
-goldbed,../data/goldstandard/callset_filered.25.bed.gz
-goldvcf,../data/goldstandard/callset_filered.25.vcf.gz
-ERR5043144.chr25,../data/NxB.HIFI.chr25.fastq.gz
-ERR7091271.chr25,../data/ERR7091271.25.fastq.gz
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.dbg
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.desc.tsv
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/annotation.relaxed.row_diff_int_brwt.annodbg
+ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
+ucd1.2_gff,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
+NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.bed.gz
+NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.vcf.gz
+ERR5043144,/home/mshokrof/workshop_12Jan_2023_data/ERR5043144.chr25.fastq.gz
+ERR7091271,/home/mshokrof/workshop_12Jan_2023_data/ERR7091271.chr25.fastq.gz
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 ```
 
-## 6.5 Make sure that configurationa is correct
+## 6.5 Make sure that configuration is correct
 run the following command
 ```
-snakemake  -np  ../results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+snakemake  -np  results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 

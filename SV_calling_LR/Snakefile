@@ -19,7 +19,7 @@ goldFiles=list(filter(lambda x: x.sample_type == "gold",pep.samples))[0].file
 for f in goldFiles:
     if f[-7:]==".bed.gz":
         goldStandardBED=f
-    elif f[-7:]==".vcf.gz": 
+    elif f[-7:]==".vcf.gz":
         goldStandardVCF=f
     else:
         raise Exception("Unexpected file format in gold standard. Supported formats bed.gz and vcf.gz")
@@ -55,29 +55,29 @@ plotNames=[]
 callingNames=["svanalyzer"]
 
 for s in LRSamples:
-#    vcfs.append("%sSURVIVOR/%s.vcf.gz" % (outputFolder, s.sample_name))
+    #    vcfs.append("%sSURVIVOR/%s.vcf.gz" % (outputFolder, s.sample_name))
     vcfs.append("%ssvanalyzer/%s.vcf.gz" % (outputFolder, s.sample_name))
     mergeVCFs[s.sample_name]={
-	"files":[],
-	"names":[]
+        "files":[],
+        "names":[]
     }
     for svTool in svCallingTools:
         toolName = list(svTool.keys())[0]
-	callingNames.append(toolName)
+        callingNames.append(toolName)
         if toolName == "pbsv" and s.sample_type == "ont":
             continue
         for mappingTool in svTool[toolName]:
             if mappingTool == "minimap2" and s.sample_type in ["hifi", "clr"]: mappingTool = "pbmm2"
-	    newBam="%smapping/%s.phased.%s.%s.bam" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
-	    if newBam  not in plotBams:
+            newBam="%smapping/%s.phased.%s.%s.bam" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
+            if newBam  not in plotBams:
                 plotBams.append(newBam)
                 plotNames.append("%s.%s.%s" % (s.sample_name, s.sample_type, mappingTool))
-	    					     
+
             newvcf = "%s%s/%s.%s.%s.phased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
             vcfs.append(newvcf)
             mergeVCFs[s.sample_name]["files"].append(newvcf[:-3])
             mergeVCFs[s.sample_name]["names"].append(toolName)
- 
+
             newvcf = "%s%s/%s.%s.%s.unphased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
             vcfs.append(newvcf)
             newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
@@ -98,7 +98,7 @@ def getBAM(wildcards, calling_tool):
         return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool in ["pbsv", "cuteSV"]:
         if wildcards.phase == "unphased":
-            return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)   
+            return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
         return "%smapping/%s.phased.%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.phase)
     else:
         raise Exception("%s not suported please edit getBAM function" % wildcards.calling_tool)
@@ -153,7 +153,7 @@ rule minimap2_ONT:
     threads: 32
     shell:
         """
-                mkdir -p {tempFolder}$$/
+        mkdir -p {tempFolder}$$/
 		mkdir -p {outputFolder}
 		minimap2 -ax map-ont --MD  -t {threads} {input.ref} {input.reads}   2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
 		samtools index {output.bam}
@@ -217,23 +217,17 @@ rule pbmm2:
     threads: 32
     shell:
         """
-                mkdir -p {tempFolder}$$/
+        mkdir -p {tempFolder}$$/
 		mkdir -p {outputFolder}
-               # cp {input.reads} {input.ref} {tempFolder}$$/
-
-              #  inputReads=$(basename {input.reads})
-               # reference=$(basename {input.ref})
-	       #		pbmm2 align {input.ref} {input.reads}  --preset HIFI --sample {params.biosample} --rg "@RG\tID:{params.biosample}" 2> {log}  |samtools sort -T {tempFolder}$$/tmpBam  -O BAM  -   > {output.bam}
-
-	        pbmm2 align {input.ref} {input.reads} {output.bam} --sort --bam-index BAI --preset HIFI --sample {params.biosample} --rg "@RG\tID:{params.biosample}" 2> {log}  
+	    pbmm2 align {input.ref} {input.reads} {output.bam} --sort --bam-index BAI --preset HIFI --sample {params.biosample} --rg "@RG\tID:{params.biosample}" 2> {log}  
 		rm {tempFolder}$$/ -r
 	"""
 
 ### call small variants
 
 clair3Models={
-	"hifi": "hifi",
-	"ont": "r941_prom_hac_g360+g422"
+    "hifi": "hifi",
+    "ont": "r941_prom_hac_g360+g422"
 }
 
 rule clair3:
@@ -263,17 +257,11 @@ rule clair3:
     shell:
         """
 		mkdir -p {tempFolder}clair$$/
-	#	singularity pull shub://hkubal/clair3:latest &>> {log}
-
 		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
 		tabix -p vcf {output.vcf}
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
 		tabix -p vcf {output.phasedVcf} 
-	#	mv {tempFolder}clair$$/merge_output.vcf.gz {output.vcf}
-	#	mv {tempFolder}clair$$/merge_output.vcf.gz.tbi {output.tbi}
-	#	mv {tempFolder}clair$$/phased_merge_output.vcf.gz {output.phasedVcf}
-	#	mv {tempFolder}clair$$/phased_merge_output.vcf.gz.tbi {output.phasedTbi}
 		rm {tempFolder}clair$$/ -r
 	"""
 
@@ -300,8 +288,8 @@ rule FilterSmallVariants:
         mem_mb=30000,cores=16
     shell:
         """
-	bcftools view -O z  -f PASS -i 'FMT/PS>=0' {input.vcf} > {output.vcf} 2> {log}
-	tabix -p vcf {output.vcf}	
+	    bcftools view -O z  -f PASS -i 'FMT/PS>=0' {input.vcf} > {output.vcf} 2> {log}
+	    tabix -p vcf {output.vcf}	
 	"""
 
 
@@ -327,13 +315,13 @@ rule concatStrucralandSmallVariants:
         mem_mb=30000,cores=16
     shell:
         """
-	bcftools concat -D  -a -O z -o {output.vcf} {input.SV_vcf} {input.small_vcf} 2> {log}
-	tabix -p vcf {output.vcf}	
+	    bcftools concat -D  -a -O z -o {output.vcf} {input.SV_vcf} {input.small_vcf} 2> {log}
+	    tabix -p vcf {output.vcf}	
 	"""
 
 
 ### Phase LR
-rule haplotag:
+rule haplotag_longphase:
     input:
         bam=outputFolder + "mapping/{sample}.{tech}.{tool}.bam",
         bai=outputFolder + "mapping/{sample}.{tech}.{tool}.bam.bai",
@@ -391,9 +379,9 @@ rule splitHaplotypesBAM:
 
 def getPhasedSampleName(wildcards):
     if wildcards.phase in ["unphased","phased"]:
-       return wildcards.sample
+        return wildcards.sample
     else:
-       return wildcards.sample +"_" + wildcards.phase[-1]
+        return wildcards.sample +"_" + wildcards.phase[-1]
 
 ## pbsv
 
@@ -412,7 +400,7 @@ rule discoverSVSignature:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames,
-	phase="h0|h1|unphased"
+        phase="h0|h1|unphased"
     log:
         outputFolder + "pbsv/{sample}.{tech}.{mapping}.{phase}.discovery.log"
     threads: 1
@@ -441,7 +429,7 @@ rule svCall:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames,
-	phase="h0|h1|unphased"
+        phase="h0|h1|unphased"
     conda:
         "envs.yaml"
     log:
@@ -453,7 +441,7 @@ rule svCall:
         """
 		mkdir -p {outputFolder}/pbsv/
 		pbsv call -j {threads} {input.ref}  {input.samples} {output} &> {log}
-        """
+    """
 
 
 rule cleanGT:
@@ -475,8 +463,6 @@ rule cleanGT:
         """
 		grep  -P "^#" {input} > {output}
 		grep  -vP "^#" {input} | cut -f1-8 | awk '{{print $0"\tGT\t1"}}' >> {output}
-
-#         "cat {input}| sed -e 's/GT:[^\t]*/GT/'  | sed -e 's/[0-9]*\/[0-9]*:[^\t]*/1/g' > {output}"
         """
 
 
@@ -487,7 +473,7 @@ rule combine_haplotypes:
         vcf_2=outputFolder + "{tool}/{sample}.{tech}.{mapping}.h1.getCleaned.vcf.gz",
         tbi_2=outputFolder + "{tool}/{sample}.{tech}.{mapping}.h1.getCleaned.vcf.gz.tbi",
     output:
-        phased=outputFolder + "{tool,[A-Za-z0-9]+}/{sample}.{tech}.{mapping}.phased.vcf",    
+        phased=outputFolder + "{tool,[A-Za-z0-9]+}/{sample}.{tech}.{mapping}.phased.vcf",
         haps=outputFolder + "{tool,[A-Za-z0-9]+}/{sample}.{tech}.{mapping}.allHaps.vcf"
     wildcard_constraints:
         tech="hifi|ont|clr",
@@ -501,15 +487,15 @@ rule combine_haplotypes:
         time=lambda wildcards, attempt: 3 * 60 * attempt
     shell:
         """
-            bcftools merge -m none --missing-to-ref {input.vcf_1} {input.vcf_2}| python3 ../tools/assign-variant-ids.py {wildcards.tool} > {output.haps}
+        bcftools merge -m none --missing-to-ref {input.vcf_1} {input.vcf_2}| python3 ../tools/assign-variant-ids.py {wildcards.tool} > {output.haps}
 	    python3 ../tools/merge_vcfs.py combine_columns -samples <(echo -e "{wildcards.sample}\t{wildcards.sample}_0\t{wildcards.sample}_1") -vcf {output.haps} > {output.phased}
         """
 
-	
+
 cuteSVParams={
-	"hifi": "	--max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5",
-	"clr":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 200 --diff_ratio_merging_DEL 0.5",
-	"ont":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3"
+    "hifi": "	--max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5",
+    "clr":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 200 --diff_ratio_merging_DEL 0.5",
+    "ont":  "	--max_cluster_bias_INS 100 --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3"
 }
 
 rule cuteSV:
@@ -528,7 +514,7 @@ rule cuteSV:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames,
-	phase="unphased|h0|h1"
+        phase="unphased|h0|h1"
     log:
         outputFolder + "cuteSV/{sample}.{tech}.{mapping}.{phase}.log"
     threads: 32
@@ -537,7 +523,6 @@ rule cuteSV:
     shell:
         """
 		mkdir -p {tempFolder}$$/
-
 		bamName=$(basename {input.bam})
 		cp {input.bam}* {tempFolder}$$/
 		cuteSV -S {params.sample} {params.params} -t {threads} {tempFolder}$$/$bamName {input.ref} {output} {tempFolder}$$/ &>{log}
@@ -554,7 +539,7 @@ rule sniffles:
         vcf=outputFolder + "sniffles/{sample}.{tech}.{mapping}.{phase}.vcf"
     params:
         phase = lambda wildcards : "--phase" if f"{wildcards.phase}" == "phased" else "",
-	sample = lambda wildcards: getPhasedSampleName(wildcards)
+        sample = lambda wildcards: getPhasedSampleName(wildcards)
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -572,7 +557,6 @@ rule sniffles:
 		mkdir -p {tempFolder}$$/
 
 		cp {input.ref} {tempFolder}$$/
-#		cp {input.bam} {tempFolder}$$/
 		bamName=$(basename {input.bam})
 		refName=$(basename {input.ref})
 
@@ -588,7 +572,7 @@ rule sniffles:
 	"""
 
 
-rule annotate_variants:
+rule annotate_variants_VEP:
     input:
         calls=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.vcf.gz",
         cache="../tools/vep/cache",
@@ -601,7 +585,7 @@ rule annotate_variants:
             outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.vcf.gz",
             caption="report/vcf.rst",
             category="Calls",
-        ),
+            ),
         stats=report(
             outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.stats.html",
             caption="report/stats.rst",
@@ -645,7 +629,7 @@ rule remove_errors_variants:
 	"""
 
 
-rule genotyping:
+rule populationGenotyping:
     input:
         vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.checked.vcf",
         ref=reference,
@@ -689,7 +673,7 @@ rule genotyping:
 	"""
 
 
-ruleorder: genotyping > compressAndIndex
+ruleorder: populationGenotyping > compressAndIndex
 
 ##Misc
 
@@ -705,8 +689,8 @@ rule compressAndIndex:
         mem_mb=3000,cores=1
     shell:
         """
- bgzip -c  {input.vcf} > {input.vcf}.gz 2> {log}
- tabix -p vcf {input.vcf}.gz
+        bgzip -c  {input.vcf} > {input.vcf}.gz 2> {log}
+        tabix -p vcf {input.vcf}.gz
      """
 
 rule indexBEDGFF:
@@ -723,29 +707,11 @@ rule indexBEDGFF:
         mem_mb=3000,cores=1
     shell:
         """
- 	tabix -p {wildcards.format} {input.vcf} 2> {log}
-	
+ 	    tabix -p {wildcards.format} {input.vcf} 2> {log}
      """
 
 
 ### Merging Results
-
-rule check:
-    input:
-        vcf="{prefix}.vcf",
-        ref=reference
-    output:
-        "{prefix}.checked.vcf"
-    conda:
-        "../envs/survivor.yaml"
-    log: "{prefix}.check.vcf.log"
-    resources:
-        mem_mb=3000,cores=1
-    shell:
-        """
- /home/mshokrof/sv/vcflib/build/vcfcheck -x -f {input.ref} {input.vcf} > {output} 2> {log}
-     """
-
 
 #ruleorder: check > SurvivorUnion 
 
@@ -754,7 +720,7 @@ rule SurvivorUnion:
         vcfs= lambda wildcards: mergeVCFs[f"{wildcards.sample}"]["files"]
     output:
         outputFolder + "SURVIVOR/{sample}.vcf"
-    params: names=lambda wildcards: mergeVCFs[f"{wildcards.sample}"]["names"] 
+    params: names=lambda wildcards: mergeVCFs[f"{wildcards.sample}"]["names"]
     wildcard_constraints:
         sample=sampleNames,
     conda:
@@ -764,12 +730,12 @@ rule SurvivorUnion:
         mem_mb=4000,cores=1
     shell:
         """
-    echo {input.vcfs} |tr -s ' ' $'\n' > input.$$.lst
-    SURVIVOR merge input.$$.lst 2000 1 1 1 1 50 tmp.$$.vcf &> {log}
-    bcftools sort -O v -o tmp2.$$.vcf tmp.$$.vcf
-    echo {params.names} |tr -s ' ' $'\n' > input.$$.names
-    bcftools reheader -s input.$$.names tmp2.$$.vcf > {output}
-    #rm input.$$.lst	 tmp2.$$.vcf tmp.$$.vcf
+        echo {input.vcfs} |tr -s ' ' $'\n' > input.$$.lst
+        SURVIVOR merge input.$$.lst 2000 1 1 1 1 50 tmp.$$.vcf &> {log}
+        bcftools sort -O v -o tmp2.$$.vcf tmp.$$.vcf
+        echo {params.names} |tr -s ' ' $'\n' > input.$$.names
+        bcftools reheader -s input.$$.names tmp2.$$.vcf > {output}
+        rm input.$$.lst	 tmp2.$$.vcf tmp.$$.vcf
      """
 
 rule svAnalyzerUnioin:
@@ -789,21 +755,21 @@ rule svAnalyzerUnioin:
         mem_mb=10000,cores=1
     shell:
         """
-    mkdir -p {tempFolder}$$/
-    ls {input.vcfs} >  {tempFolder}$$/source.lst
-    grep -oP "[^/]*/[^/]*$" {tempFolder}$$/source.lst > {tempFolder}$$/tmp1 2> {log}
-    cut -f1 {tempFolder}$$/tmp1 -d "/" | sed -e "s#^#{tempFolder}$$/#" > 	{tempFolder}$$/folders.lst 2>> {log}
-    parallel --gnu 'mkdir {{}}' :::: {tempFolder}$$/folders.lst 2>> {log}
-    paste {tempFolder}$$/source.lst {tempFolder}$$/folders.lst |   xargs -n2 cp
-    paste -d '/' {tempFolder}$$/folders.lst <(cut -f2 {tempFolder}$$/tmp1 -d "/") >  {tempFolder}$$/input.lst 2>> {log}
-    cp {input.ref} {tempFolder}$$/
-    refName=$(basename {input.ref})
-    svanalyzer merge --ref {tempFolder}$$/$refName  --fof {tempFolder}$$/input.lst --prefix {tempFolder}$$/tmp &>> {log}
-    cat {tempFolder}$$/tmp.log >> {log}
-    mv {tempFolder}$$/tmp.distances {output.distances}
-    python ../tools/addGT.py {tempFolder}$$/tmp.clustered.vcf {output.vcf} {input.vcfs}
-    #mv {tempFolder}$$/tmp.clustered.vcf {output.vcf}
-    rm -rf  {tempFolder}$$/
+        mkdir -p {tempFolder}$$/
+        ls {input.vcfs} >  {tempFolder}$$/source.lst
+        grep -oP "[^/]*/[^/]*$" {tempFolder}$$/source.lst > {tempFolder}$$/tmp1 2> {log}
+        cut -f1 {tempFolder}$$/tmp1 -d "/" | sed -e "s#^#{tempFolder}$$/#" > 	{tempFolder}$$/folders.lst 2>> {log}
+        parallel --gnu 'mkdir {{}}' :::: {tempFolder}$$/folders.lst 2>> {log}
+        paste {tempFolder}$$/source.lst {tempFolder}$$/folders.lst |   xargs -n2 cp
+        paste -d '/' {tempFolder}$$/folders.lst <(cut -f2 {tempFolder}$$/tmp1 -d "/") >  {tempFolder}$$/input.lst 2>> {log}
+        cp {input.ref} {tempFolder}$$/
+        refName=$(basename {input.ref})
+        svanalyzer merge --ref {tempFolder}$$/$refName  --fof {tempFolder}$$/input.lst --prefix {tempFolder}$$/tmp &>> {log}
+        cat {tempFolder}$$/tmp.log >> {log}
+        mv {tempFolder}$$/tmp.distances {output.distances}
+        python ../tools/addGT.py {tempFolder}$$/tmp.clustered.vcf {output.vcf} {input.vcfs}
+        #mv {tempFolder}$$/tmp.clustered.vcf {output.vcf}
+        rm -rf  {tempFolder}$$/
      """
 
 
@@ -881,8 +847,8 @@ rule alfredQC:
     threads: 1
     shell:
         """
-     alfred qc -i  -r {input.ref} -o {output.tsv} {input.bam} &> {log}
-zgrep "^ME" {output.tsv} 2>>{log} | datamash transpose  > {output.txt} 2>>{log}
+        alfred qc -i  -r {input.ref} -o {output.tsv} {input.bam} &> {log}
+        zgrep "^ME" {output.tsv} 2>>{log} | datamash transpose  > {output.txt} 2>>{log}
      """
 
 rule samtoolsStat:
@@ -899,7 +865,7 @@ rule samtoolsStat:
     threads: 1
     shell:
         """
-samtools flagstat {input} > {output} 2>{log}		
+        samtools flagstat {input} > {output} 2>{log}		
      """
 
 
@@ -907,17 +873,17 @@ samtools flagstat {input} > {output} 2>{log}
 rule samplot:
     input:
         bams=plotBams,
-	gff=reference_gff,
-	gffIndex=reference_gff+".tbi",
-	rmsk=reference_rmsk,
-	rmskIndex=reference_rmsk+".tbi",
-	goldStandard=goldStandardBED,
-	goldStandardIndex=goldStandardBED+".tbi"
+        gff=reference_gff,
+        gffIndex=reference_gff+".tbi",
+        rmsk=reference_rmsk,
+        rmskIndex=reference_rmsk+".tbi",
+        goldStandard=goldStandardBED,
+        goldStandardIndex=goldStandardBED+".tbi"
     output:
         outputFolder + "samplot/{SVTYPE}_{chrom}_{start}_{end}.png"
     params:
         window= lambda wildcards: int(abs(int(f"{wildcards.end}")-int(f"{wildcards.start}"))/2),
-	names=plotNames
+        names=plotNames
     conda:
         "envs.yaml"
     resources:
@@ -927,7 +893,7 @@ rule samplot:
     threads: 1
     shell:
         """
-	samplot plot -n {params.names}  -b {input.bams}   -o {output}  -c {wildcards.chrom} -s {wildcards.start}  -e {wildcards.end} -w {params.window} -t {wildcards.SVTYPE}  -T {input.gff} -A {input.rmsk} {input.goldStandard}  -H 6 -W 6 --annotation_scalar 2 &> {log}
+	    samplot plot -n {params.names}  -b {input.bams}   -o {output}  -c {wildcards.chrom} -s {wildcards.start}  -e {wildcards.end} -w {params.window} -t {wildcards.SVTYPE}  -T {input.gff} -A {input.rmsk} {input.goldStandard}  -H 6 -W 6 --annotation_scalar 2 &> {log}
         """
 
 
@@ -935,19 +901,15 @@ rule samplot:
 rule benchmarkSV:
     input:
         vcf=outputFolder+ "{tool}/{options}.vcf.gz",
-	ref=reference,
-	goldStandard=goldStandardVCF,
-	goldStandardIndex=goldStandardVCF+".tbi"
+        ref=reference,
+        goldStandard=goldStandardVCF,
+        goldStandardIndex=goldStandardVCF+".tbi"
     output:
         outputFolder+ "benchmarks/{tool}.{options}/summary.txt"
     params:
         outFolder = outputFolder+ "benchmarks/{tool}.{options}/"
     wildcard_constraints:
-        tool=callingNames        
-    #     tech="hifi|ont|clr",
-    #     mapping=mappingTools,
-    #     sample=sampleNames,
-    #     phase="phased|unphased"
+        tool=callingNames
     conda:
         "envs.yaml"
     resources:
@@ -957,6 +919,6 @@ rule benchmarkSV:
     threads: 1
     shell:
         """
-	rm -rf {params.outFolder}
-	truvari bench -b {input.goldStandard} -c {input.vcf}  -o {params.outFolder} --passonly  -r 2000 -C 3000  --reference {input.ref} &> {log}
+	    rm -rf {params.outFolder}
+	    truvari bench -b {input.goldStandard} -c {input.vcf}  -o {params.outFolder} --passonly  -r 2000 -C 3000  --reference {input.ref} &> {log}
         """
