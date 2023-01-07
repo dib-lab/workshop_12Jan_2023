@@ -98,20 +98,35 @@ The workflow expects the input files to be stored in samples_table.csv and subsa
 2. change the outputFolder and tempFolder to desired output folder. We can just leave the default options
 3. close by pressing ctrl+x then ctrl+c
 ## 6.3 Edit sample_table.csv
-we are going to define 7 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample, and hifi sample. 
+We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a datasets. For each dataset, we add three comma sperated columns:
+1. sample_name: id for each dataset
+2. sample_type: we define here the type for the datasets using the following types
 
-The file should be like the following:
+    | Type        | Defention             |
+    | ------------- |:-------------:|
+    | ref      | reference genome |
+    | gff      | genes annotation of the reference  |
+    | rmsk     | repeat annotation of the reference |
+    | gold     | gold standard for Variant calling  |
+    | ont      | Oxford nanpore sample |
+    | hifi     | Pacbio Hifi sample|
+    | clr      | Pacbio CLR sample|
+3. bioSample: the biosample id of each dataset. 
+
+
+we are going to define 8 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample,  hifi sample, and a cohort graph. 
+
+
+Open sample_table.csv and Paste the following lines under the header:
 ```
-sample_name,library,Breed,BioSample
-ucd1.2,ref,Hereford,HEREFORD
-ucd1.2_gff,gff,Hereford,HEREFORD
-ucd1.2_rmsk,rmsk,Hereford,HEREFORD
-goldbed,gold_bed,NelloreXBrown_Swiss,SAMEA7765441
-goldvcf,gold_vcf,NelloreXBrown_Swiss,SAMEA7765441
-ERR5043144.chr25,hifi,NelloreXBrown_Swiss,SAMEA7765441
-ERR7091271.chr25,ont,NelloreXBrown_Swiss,SAMEA7765441
+ucd1.2,ref,SAMN03145444
+ucd1.2_gff,gff,SAMN03145444
+ucd1.2_rmsk,rmsk,SAMN03145444
+NxB,gold,SAMEA7765441
+ERR5043144,hifi,SAMEA7765441
+ERR7091271,ont,SAMEA7765441
 ```
-Make sure that you specify the library correctly because it changes how the execution of the workflow. For example, specifying ERR5043144.chr25 as hifi will change the mapping tool to pbmm2 and calling parameters in cuteSV.
+Make sure that you specify the sample_type correctly because it changes execution of the workflow. For example, specifying ERR5043144 as hifi will change the mapping tool to pbmm2 and calling parameters in cuteSV.
 
 
 ## 6.4 Edit subsample_table.csv
