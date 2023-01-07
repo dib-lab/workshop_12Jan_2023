@@ -49,8 +49,54 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
 
 
  
-# How to Run
-1. add your samples names and sequencing technology to sample_table.csv
-2. add samples files to subsample_table.csv
-3. add outputfolder to config.yaml
-4. run using snakemake -j16 --use-conda
+# Let's start
+## Installing the environment
+1. install conda using the following link https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
+2. create the conda environment and install the tools
+```
+conda install mamba -n base -c conda-forge
+mamba env create -f envs.yaml
+mamba activate cattle_sv
+```
+The workflow expects the input files to be stored in samples_table.csv and subsample_table.csv, and the configurations in config.yaml.
+## Edit config.yaml
+1. change the outputFolder to desired output folder. We can choose "results/"
+2. change the tempFolder to desired temporary folder. We can choose "scratch/"
+## Edit sample_table.csv
+we are going to define 7 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample, and hifi sample.
+The file should be like the following:
+```
+sample_name,library,Breed,BioSample
+ucd1.2,ref,Hereford,HEREFORD
+ucd1.2_gff,gff,Hereford,HEREFORD
+ucd1.2_rmsk,rmsk,Hereford,HEREFORD
+goldbed,gold_bed,NelloreXBrown_Swiss,SAMEA7765441
+goldvcf,gold_vcf,NelloreXBrown_Swiss,SAMEA7765441
+ERR5043144.chr25,hifi,NelloreXBrown_Swiss,SAMEA7765441
+ERR7091271.chr25,ont,NelloreXBrown_Swiss,SAMEA7765441
+```
+
+## Edit subsample_table.csv
+we are going to specify the files for each dataset. write the file paths of the downloaded data 
+The file should be like the following:
+```
+sample_name,file
+ucd1.2,../data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+ucd1.2_rmsk,../data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
+ucd1.2_gff,../data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
+goldbed,../data/goldstandard/callset_filered.25.bed.gz
+goldvcf,../data/goldstandard/callset_filered.25.vcf.gz
+ERR5043144.chr25,../data/NxB.HIFI.chr25.fastq.gz
+ERR7091271.chr25,../data/ERR7091271.25.fastq.gz
+cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.dbg
+cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.desc.tsv
+cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/annotation.relaxed.row_diff_int_brwt.annodbg
+```
+
+## Make sure that configurationa is correct
+run the following command and 
+
+4. add your samples names and sequencing technology to sample_table.csv
+5. add samples files to subsample_table.csv
+6. add outputfolder to config.yaml
+7. run using snakemake -j16 --use-conda
