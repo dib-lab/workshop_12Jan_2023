@@ -130,26 +130,26 @@ Make sure that you specify the sample_type correctly because it changes executio
 
 
 ## 6.4 Edit subsample_table.csv
-we are going to specify the files for each dataset. write the file paths of the downloaded data 
-The file should be like the following:
+we are going to specify the files for each dataset. 
+open subsample_table.csv using emacs and  copy paste the following lines under header line
+
 ```
-sample_name,file
-ucd1.2,../data/ARS-UCD1.2_Btau5.0.1Y.25.fa
-ucd1.2_rmsk,../data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
-ucd1.2_gff,../data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
-goldbed,../data/goldstandard/callset_filered.25.bed.gz
-goldvcf,../data/goldstandard/callset_filered.25.vcf.gz
-ERR5043144.chr25,../data/NxB.HIFI.chr25.fastq.gz
-ERR7091271.chr25,../data/ERR7091271.25.fastq.gz
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.dbg
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/graph.desc.tsv
-cattle_taurus_10,/group/ctbrowngrp/mshokrof/cattle/metagraph_taurus_10/smooth_10000000/annotation.relaxed.row_diff_int_brwt.annodbg
+ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
+ucd1.2_gff,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
+NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.bed.gz
+NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.vcf.gz
+ERR5043144,/home/mshokrof/workshop_12Jan_2023_data/ERR5043144.chr25.fastq.gz
+ERR7091271,/home/mshokrof/workshop_12Jan_2023_data/ERR7091271.chr25.fastq.gz
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
+cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 ```
 
-## 6.5 Make sure that configurationa is correct
+## 6.5 Make sure that configuration is correct
 run the following command
 ```
-snakemake  -np  ../results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+snakemake  -np  results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 
