@@ -1,5 +1,5 @@
-outputFolder:  ../results/LR_calling/
-tempFolder: /scratch/mshokrof/
+outputFolder:  results/
+tempFolder: scratch/
 
 
 

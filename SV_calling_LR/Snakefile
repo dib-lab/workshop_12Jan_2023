@@ -11,19 +11,19 @@ svCallingTools = config["svCallingTools"]
 vep_extra = config["vep"]["extra"]
 vep_plugins = config["vep"]["plugins"]
 
-reference = list(filter(lambda x: x.library == "ref",pep.samples))[0].file[0]
-reference_gff = list(filter(lambda x: x.library == "gff",pep.samples))[0].file[0]
-reference_rmsk = list(filter(lambda x: x.library == "rmsk",pep.samples))[0].file[0]
+reference = list(filter(lambda x: x.sample_type == "ref",pep.samples))[0].file[0]
+reference_gff = list(filter(lambda x: x.sample_type == "gff",pep.samples))[0].file[0]
+reference_rmsk = list(filter(lambda x: x.sample_type == "rmsk",pep.samples))[0].file[0]
 
 
-goldStandardBED=list(filter(lambda x: x.library == "gold_bed",pep.samples))[0].file[0]
-goldStandardVCF=list(filter(lambda x: x.library == "gold_vcf",pep.samples))[0].file[0]
+goldStandardBED=list(filter(lambda x: x.sample_type == "gold_bed",pep.samples))[0].file[0]
+goldStandardVCF=list(filter(lambda x: x.sample_type == "gold_vcf",pep.samples))[0].file[0]
  
 bioSamples = dict([(s.sample_name, s.BioSample) for s in pep.samples])
 
 vcfs = []
 
-tmp = list(filter(lambda x: x.library == "graph",pep.samples))
+tmp = list(filter(lambda x: x.sample_type == "graph",pep.samples))
 graphs = [s.sample_name for s in tmp]
 graphs_constraint = "|".join(graphs)
 graphsFiles = {}
@@ -39,7 +39,7 @@ for g in graphs:
         elif ".desc.tsv" == f[-9:]:
             graphsFiles[g]["desc"] = f
 
-LRSamples = list(filter(lambda x: x.library in ["hifi", "ont"],pep.samples))
+LRSamples = list(filter(lambda x: x.sample_type in ["hifi", "ont"],pep.samples))
 sampleNames = "|".join([s.sample_name for s in LRSamples])
 
 mergeVCFs={}
@@ -58,26 +58,26 @@ for s in LRSamples:
     for svTool in svCallingTools:
         toolName = list(svTool.keys())[0]
 	callingNames.append(toolName)
-        if toolName == "pbsv" and s.library == "ont":
+        if toolName == "pbsv" and s.sample_type == "ont":
             continue
         for mappingTool in svTool[toolName]:
-            if mappingTool == "minimap2" and s.library in ["hifi", "clr"]: mappingTool = "pbmm2"
-	    newBam="%smapping/%s.phased.%s.%s.bam" % (outputFolder, s.sample_name, s.library, mappingTool)
+            if mappingTool == "minimap2" and s.sample_type in ["hifi", "clr"]: mappingTool = "pbmm2"
+	    newBam="%smapping/%s.phased.%s.%s.bam" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
 	    if newBam  not in plotBams:
                 plotBams.append(newBam)
-                plotNames.append("%s.%s.%s" % (s.sample_name, s.library, mappingTool))
+                plotNames.append("%s.%s.%s" % (s.sample_name, s.sample_type, mappingTool))
 	    					     
-            newvcf = "%s%s/%s.%s.%s.phased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.library, mappingTool)
+            newvcf = "%s%s/%s.%s.%s.phased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
             vcfs.append(newvcf)
             mergeVCFs[s.sample_name]["files"].append(newvcf[:-3])
             mergeVCFs[s.sample_name]["names"].append(toolName)
  
-            newvcf = "%s%s/%s.%s.%s.unphased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.library, mappingTool)
+            newvcf = "%s%s/%s.%s.%s.unphased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
             vcfs.append(newvcf)
-            newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.library, mappingTool)
+            newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
             #vcfs.append(newvcf)
             for g in graphs:
-                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/merged.vcf.gz" % (g, s.sample_name, s.library, mappingTool)
+                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/merged.vcf.gz" % (g, s.sample_name, s.sample_type, mappingTool)
                 vcfs.append(popVCF)
 
 callingNames= "|".join(callingNames)
@@ -104,7 +104,7 @@ def getBAI(wildcards, calling_tool):
 
 
 def getFile(wildcards):
-    l = list(filter(lambda x: x.sample_name == wildcards.sample and x.library == wildcards.tech,pep.samples))
+    l = list(filter(lambda x: x.sample_name == wildcards.sample and x.sample_type == wildcards.tech,pep.samples))
     if len(l) == 0:
         raise Exception("Cant find %s reads for %s" % (wildcards.tech, wildcards.sample))
     return l[0].file
@@ -303,8 +303,8 @@ rule concatStrucralandSmallVariants:
     input:
         small_vcf=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz",
         small_tbi=outputFolder + "small_variants/clair3/{sample}.phased.{tech}.{mapping}.filtered.vcf.gz.tbi",
-        SV_vcf=outputFolder + "sniffles/{sample}.{tech}.{mapping}.vcf.gz",
-        SV_tbi=outputFolder + "sniffles/{sample}.{tech}.{mapping}.vcf.gz.tbi"
+        SV_vcf=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz",
+        SV_tbi=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi"
     output:
         vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
         tbi=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz.tbi"
