@@ -18,3 +18,4 @@ vep:
       - LoFtool
     # extra command line arguments (e.g. --sift, see docs)
    extra: ""
+   path: /home/mshokrof/workshop_12Jan_2023_data/vep/
