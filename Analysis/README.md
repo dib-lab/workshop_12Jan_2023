@@ -21,7 +21,16 @@ gatk SelectVariants -V <input.vcf> --select-type-to-include INDEL --min-indel-si
 
 ###samplot
 
+## plot a SV
+Lets first get high impact variant
+```
+zgrep "|HIGH|" results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz 
+```
 
+lets visualize 
+```
+snakemake -np ../results/LR_calling/samplot/DEL_25_41669173_41669210.png
+```
 
 
 ### ribbon
