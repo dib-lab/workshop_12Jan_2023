@@ -312,6 +312,19 @@ bcftools view  results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minima
 
 Q: how many variants have a high impact on the gene function?
 
+Let's download the VEP report and check it. 
+
+First get the full path of the report
+```
+readlink -f results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.stats.html
+```
+
+Open a new terminal and download the reprot from the server
+```
+scp <your_username>@farm:<path> ./
+```
+
+open the report with web explorer(chrome, firefox, or edge).
 
 
 
