@@ -2,7 +2,7 @@
 We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore.  We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
 
 ## Aims
-1. learn how to call and phase SVs using the different sv callers
+1. learn how to call and phase SVs using the different SV callers
 2. compare the performance of different methods
 3. learn how to calculate population allele frequency for cattle SVs
 4. learn how to predict the impact of SV on genes
@@ -17,10 +17,8 @@ We are going to learn how to study structral variants(SV) in cattle genomes usin
 # 3) Terminology
 * haplotype-resolved assembly:
 * Structrual Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
-* Phasing variant
+* Phased variant
 * Population Allele frequency
-* Pacbio
-* Oxford
 * Snakemake
 * Variant calling
 * genotyping
@@ -29,9 +27,9 @@ We are going to learn how to study structral variants(SV) in cattle genomes usin
 
 
 # 4) Data Description 
-We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: 
-1. We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
-2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  
+We chose sequencing datasets from  the haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: 
+1. We can create a gold standard benchmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
+2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of different methods.  
 
 |<img src="sv_callers.jpg" alt="sv" width="500"/>|
 |:--:|
@@ -66,7 +64,7 @@ we  created a downsampled the data for the sake of the workshope. We are going t
 
 # 5) Workflow:
 
-We created a snakemake script to wrap all the commands in the tutorial. The workflow(summarized in Figure 2) has the following steps: 
+All the tutorial commands are written as Snakemake recipes. The workflow(summarized in Figure 2) has the following steps: 
   1. map using minmap2/pbmm2
   2. call small variants using clair3 and phase them using longshot
   3. split the reads into two haplotypes
@@ -109,7 +107,7 @@ The workflow expects the input files to be stored in samples_table.csv and subsa
 2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
 3. close by pressing ctrl+x then ctrl+c
 ## 6.3 Edit sample_table.csv
-We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a datasets. For each dataset, we add three comma sperated columns:
+We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a dataset. For each dataset, we add three comma separated columns:
 1. sample_name: id for each dataset
 2. sample_type: we define here the type for the datasets using the following types
 
@@ -142,7 +140,7 @@ Make sure that you specify the sample_type correctly because it changes executio
 
 ## 6.4 Edit subsample_table.csv
 we are going to specify the files for each dataset. 
-open subsample_table.csv using emacs and  copy paste the following lines under header line
+open subsample_table.csv using emacs and  copy paste the following lines under the header line
 
 ```
 ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
@@ -170,7 +168,7 @@ you should expect a dry snakemake run where all the commands will be printed. At
 * running mode can be either 
     * "-np" instructs snakemake to print the commands and parameters without running anything  
     * "-j 8" instructs snakemake to run the script using 16 threads
-* outpath files path follow the pattern the following
+* outpath files path follows the pattern the following
 <img src="snakemake_path.png" alt="sv" width="700"/>
 
 
@@ -196,7 +194,7 @@ First, Lets look at how the worklfow is going to map the ONT reads
 ```
 snakemake -np results/mapping/ERR7091271.ont.minimap2.bam
 ```
-As you can see, the workflow will start by creating index for the reference genome and then used it to map the reads. 
+As you can see, the workflow will start by creating an index for the reference genome and then using it to map the reads. 
 to actually run the command remove "-np" from the previous command and add '-j8' instead. Snakemake will use 8 threads to run the steps
 
   
@@ -212,7 +210,7 @@ Q: What is the median coverage?  and median read length?
 
 ## 7.2 Call and phase small variants using clair3 and longphase
 
-Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased snps. It uses longshot to phase the small variants
+Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased SNPs. It uses longshot to phase the small variants
 Use the following command to run Clair3  
 ```
 snakemake -p -j8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
