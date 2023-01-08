@@ -228,7 +228,7 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result
   
 ##  7.3 call SVs
 our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined.  
-()[]  
+![sv dag](sv_dag.png)  
   
 ```
 snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
