@@ -29,13 +29,16 @@ We chose sequencing datasets from  haplotype-resolved assembly project(PRJEB4233
 1. We can create a gold standard benhcmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
 2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of differnet metohds.  
 
-|![compare](sv_callers.jpg)|
+|<img src="sv_callers.jpg" alt="sv" width="500"/>|
 |:--:|
 |Figure 1: Comparison of different methods
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
 |
 
-Test Input data for the workshop can be downloaded from the following link and they are available on farm on 
+Test Input data for the workshop can be downloaded from the following link and they are available on farm on
+```
+/home/mshokrof/workshop_12Jan_2023_data/
+```
 
 The follwoing table describes the downloaded files 
 | file        |  Description  |
@@ -72,7 +75,7 @@ We created a snakemake script to wrap all the commands in the tutorial. The work
 
 
  
-# 6) Let's start
+# 6) Let's start configurations
 ## 6.1 Installing the environment
 1. clone this repo:
 ```
@@ -184,35 +187,70 @@ you should expect a dry snakemake run where all the commands will be printed. At
 * Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you cant follow up the workshop pace, just run the current command and snakemake will catch up. 
 
   
-
-## 6.6 Lets map the reads using minimap2
+# 7 Analysis of Oxford nanopore reads (ERR7091271) 
+## 7.1 Lets map the reads using minimap2
   
 First, Lets look at how the worklfow is going to map the ONT reads
 ```
-snakemake -np results/mapping/ERR7091271.chr25.ont.minimap2.bam
+snakemake -np results/mapping/ERR7091271.ont.minimap2.bam
 ```
 As you can see, the workflow will start by creating index for the reference genome and then used it to map the reads. 
-to actually run the command remove "-np" from the previous command and add '-j16' instead. Snakemake will use 16 threads to run the steps
+to actually run the command remove "-np" from the previous command and add '-j8' instead. Snakemake will use 8 threads to run the steps
 
-## 6.7 use Clair3 to call and phase small variants
+  
+Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/)
 
 ```
-snakemake -j16 results/small_variants/clair3/ERR7091271.chr25.ont.minimap2.vcf.gz
+snakemake -j1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
+cat results/mapping/ERR7091271.ont.minimap2.alfred.txt
+``` 
+What is the median coverage?  and median read length?
+  
+
+## 7.2 Call and phase small variants using clair3 and longphase
+
+Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased snps. It uses longshot to phase the small variants
+Use the following command to run Clair3  
 ```
+snakemake -j8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
+```
+  
+Let's check the number of detected variants
+  
+```
+  gzip -dc results/clair3/ERR7091271.ont.minimap2.vcf.gz |grep -vP "^#" |wc -l 
+```
+  
+  
 
 
-##  6.8 call SV useing cuteSV
-
+  
+##  7.3 call SVs
+our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined.  
+()[]  
+  
 ```
 snakemake -j 16 results/cuteSV/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
+snakemake -j 16 results/sniffles/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
+  
+
+snakemake -j 16 results/cuteSV/ERR7091271.chr25.ont.minimap2.unphased.vcf.gz
+snakemake -j 16 results/sniffles/ERR7091271.chr25.ont.minimap2.unphased.vcf.gz  
 ```
 
-##  6.9 Benchmark the results
+Let's check the number of detected variants
+  
+```
+  gzip -dc  results/sniffles/ERR7091271.chr25.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
+```
 
+We can benchmark the result varaints against the gold standard using the following command  
 ```
 snakemake -j 16  results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
 cat results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
 ```
+  
+Which tool produces the best performance? What is the effect of phasing? 
 
 
 ##  6.10 calcualte AF
