@@ -56,6 +56,7 @@ The follwoing table describes the downloaded files
 | cattle_indicus_10/graph.desc.tsv |  file contains the Biosample ids|
 | cattle_bostgroup_10 |  Folder contains Kmer indexes of 10  boison samples|
 | cattle_bosgroup_10/graph.desc.tsv |  file contains the Biosample ids|
+| vep/ | vep annotation data|
 
 we  created a downsampled the data for the sake of the workshope. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples).
 
@@ -201,8 +202,9 @@ Let's check the quality of the mapping by looking at mapping statistics calculat
 snakemake  -p -j1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 cat results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ``` 
-What is the median coverage?  and median read length?
-  
+
+Q: What is the median coverage?  and median read length?
+
 
 ## 7.2 Call and phase small variants using clair3 and longphase
 
@@ -227,7 +229,7 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result
 
   
 ##  7.3 call SVs
-our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined. 
+Our workfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined. 
 
 ![sv dag](sv_dag.png)
 
@@ -256,7 +258,7 @@ snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
 Let's check the number of detected variants
   
 ```
-  gzip -dc  results/sniffles/ERR7091271.chr25.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
+  gzip -dc  results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
 ```
 
 Which tool produced the most variants?
@@ -264,37 +266,66 @@ Which tool produced the most variants?
 
 We can benchmark the result varaints against the gold standard using the following command  
 ```
-snakemake -p -j 1  results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
-cat results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+snakemake -p -j 1  results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
+cat results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
 ```
-  
-Which tool produces the best performance? What is the effect of phasing? 
+
+
+Q: Which tool produces the best performance? What is the effect of phasing? 
 
 
 
 
-##  6.10 calcualte AF
+##  7.4 Calculate Population Allele Frequency
+Here we are going to calculating population allele frequency for the discovered structural and small variants by genotyping them in a cohort of short read samples. We are using our novel tool to do the population genotyping efficiently. We created a database of the kmers of 464 samples(aiming to  5000 samples). Our tool can utilize the created databases to genotype phased SV and small variants.  
 
+Here we are going to use a very small database of 10 samples.
 ```
-snakemake -j 16 results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/merged.vcf.gz
-```
-
-## 6.11 annotate using VEP
-```
-snakemake -j 16 results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz
+snakemake -p -j 8 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
 ```
 
-
-## plot a SV
-Lets first get high impact variant
+lets take a peek on the result file
 ```
-zgrep "|HIGH|" results/LR_calling/variants/GG/cattle_taurus_10.ERR7091271.chr25.ont.minimap2/annotated/merged.vcf.gz 
+gzip -dc results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head 
 ```
 
-lets visualize 
+or check the high frequent variants
 ```
-snakemake -np ../results/LR_calling/samplot/DEL_25_41669173_41669210.png
+bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
+
+
+## 7.5 annotate using VEP
+
+The last step in the workflow is use VEP to annotate the discovered variants with their effect on gene function.
+
+```
+snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
+```
+
+lets view variants predicted to have high impact on gene function
+```
+bcftools view  results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |grep "HIGH" |less
+```
+
+Q: how many variants have high impact on the gene function?
+
+
+
+
+
+# 7 Analysis of Pacbio hifi reads (ERR5043144) 
+
+Here we are going to run a very similar workflow with a few adjustments:
+1. pbmm2 is used instead of minimap2
+2. clair3 is instructed to use another model for hifi reads
+3. cuteSV is using different paramters
+4. pbsv is added to the list of the SV callers
+
+![hifi](hifi_dag.png)
+
+
+
 
 
 
