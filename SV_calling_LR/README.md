@@ -165,13 +165,8 @@ you should expect a dry snakemake run where all the commands will be printed. At
 * running mode can be either 
     * "-np" instructs snakemake to print the commands and parameters without running anything  
     * "-j 8" instructs snakemake to run the script using 16 threads
-* outpath files path follow the pattern "<step>/<sample_name>.<sample_type>.<mapping_tool>.<phasing status>.<extension>"
-    * <step> is the name of the current step to be running. step options are mapping, clair3, cuteSV, sniffles, pbsv, samplot, and benchmark
-    * <sample_name> can be one of the name of sequencing samples specified in sample_table.csv. In our case, ERR5043144 or ERR7091271.
-    * <sample_type> can be either "ont" or "hifi"
-    * <mapping_tool> can be either "minimap2" or "pbmm2"
-    * <phasing status> can be either "phased" or "unphased"
-    * <extension> can be ".vcf", "bam", or "gz".
+* outpath files path follow the pattern the following
+<img src="snakemake_path.png" alt="sv" width="700"/>
 ```
   # print commands to map ERR5043144  using pbmm2
    snakemake results/mapping/ERR5043144.hifi.pbmm2.bam -np
