@@ -227,16 +227,30 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result
 
   
 ##  7.3 call SVs
-our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined.  
-![sv dag](sv_dag.png)  
+our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined. 
+
+![sv dag](sv_dag.png)
+
+
+Let's first check the normal running of cuteSV and sniffles
+```
+snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.unphased.vcf.gz
+```
+
+```
+snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.unphased.vcf.gz
+```
+
+Let's run give sniffles the phasing option
+
+```
+snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz
+```
+  
+Let's run the workflow for phased cuteSV 
   
 ```
 snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
-snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz
-  
-
-snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.unphased.vcf.gz
-snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.unphased.vcf.gz  
 ```
 
 Let's check the number of detected variants
@@ -244,6 +258,9 @@ Let's check the number of detected variants
 ```
   gzip -dc  results/sniffles/ERR7091271.chr25.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
 ```
+
+Which tool produced the most variants?
+
 
 We can benchmark the result varaints against the gold standard using the following command  
 ```
