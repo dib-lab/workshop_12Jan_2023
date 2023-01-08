@@ -101,7 +101,7 @@ The workflow expects the input files to be stored in samples_table.csv and subsa
 ```
   emacs config.yaml
 ```
-2. change the outputFolder and tempFolder to desired output folder. We can just leave the default options
+2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
 3. close by pressing ctrl+x then ctrl+c
 ## 6.3 Edit sample_table.csv
 We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a datasets. For each dataset, we add three comma sperated columns:
@@ -155,7 +155,7 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 ## 6.5 Make sure that configuration is correct
 run the following command
 ```
-snakemake  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/annotated/merged.vcf.gz
+snakemake -p  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/annotated/merged.vcf.gz
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
 
@@ -167,6 +167,8 @@ you should expect a dry snakemake run where all the commands will be printed. At
     * "-j 8" instructs snakemake to run the script using 16 threads
 * outpath files path follow the pattern the following
 <img src="snakemake_path.png" alt="sv" width="700"/>
+
+
 ```
   # print commands to map ERR5043144  using pbmm2
    snakemake results/mapping/ERR5043144.hifi.pbmm2.bam -np
@@ -196,7 +198,7 @@ to actually run the command remove "-np" from the previous command and add '-j8'
 Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/)
 
 ```
-snakemake -j1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
+snakemake  -p -j1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 cat results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ``` 
 What is the median coverage?  and median read length?
@@ -207,7 +209,7 @@ What is the median coverage?  and median read length?
 Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased snps. It uses longshot to phase the small variants
 Use the following command to run Clair3  
 ```
-snakemake -j8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
+snakemake -p -j8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
 ```
   
 Let's check the number of detected variants
@@ -216,7 +218,11 @@ Let's check the number of detected variants
   gzip -dc results/clair3/ERR7091271.ont.minimap2.vcf.gz |grep -vP "^#" |wc -l 
 ```
   
-  
+lets compare the calling result with our gold standard. Notice here that we added --use-conda to the command becuase this command need another conda environemnt
+```
+snakemake -p -j1 results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv  --use-conda
+cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv
+```
 
 
   
@@ -225,12 +231,12 @@ our worlfow supports sv calling using  sniffles, and cuteSV. We are going to try
 ()[]  
   
 ```
-snakemake -j 16 results/cuteSV/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
-snakemake -j 16 results/sniffles/ERR7091271.chr25.ont.minimap2.phased.vcf.gz
+snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
+snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz
   
 
-snakemake -j 16 results/cuteSV/ERR7091271.chr25.ont.minimap2.unphased.vcf.gz
-snakemake -j 16 results/sniffles/ERR7091271.chr25.ont.minimap2.unphased.vcf.gz  
+snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.unphased.vcf.gz
+snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.unphased.vcf.gz  
 ```
 
 Let's check the number of detected variants
@@ -241,11 +247,13 @@ Let's check the number of detected variants
 
 We can benchmark the result varaints against the gold standard using the following command  
 ```
-snakemake -j 16  results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
+snakemake -p -j 1  results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
 cat results/benchmarks/cuteSV.ERR5043144.chr25.hifi.pbmm2.phased/summary.txt
 ```
   
 Which tool produces the best performance? What is the effect of phasing? 
+
+
 
 
 ##  6.10 calcualte AF
