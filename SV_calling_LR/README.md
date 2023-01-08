@@ -266,8 +266,8 @@ Which tool produced the most variants?
 
 We can benchmark the result varaints against the gold standard using the following command  
 ```
-snakemake -p -j 1  results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
-cat results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
+snakemake -p -j 1  results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
+cat results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
 ```
 
 
@@ -314,7 +314,7 @@ Q: how many variants have high impact on the gene function?
 
 
 
-# 7 Analysis of Pacbio hifi reads (ERR5043144) 
+# 8 Analysis of Pacbio hifi reads (ERR5043144) 
 
 Here we are going to run a very similar workflow with a few adjustments:
 1. pbmm2 is used instead of minimap2
@@ -325,7 +325,41 @@ Here we are going to run a very similar workflow with a few adjustments:
 ![hifi](hifi_dag.png)
 
 
+Let's map and check the quality of the mapping
+```
+snakemake  -p -j 8 results/mapping/ERR5043144.hifi.pbmm2.alfred.txt
+cat results/mapping/ERR5043144.ont.minimap2.alfred.txt
+``` 
+
+call small variants and run the benchmarking tool
+
+```
+snakemake -p -j 8 results/benchmarks_small/clair3.ERR5043144.hifi.minimap2/result.summary.csv  --use-conda
+cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR5043144.hifi.minimap2/result.summary.csv
+```
+
+call SV using all the tools and run the benchmarking tool
+
+```
+snakemake -p -j 8  results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
+cat results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
+```
 
 
+```
+snakemake -p -j 8  results/benchmarks/sniffles.ERR5043144.hifi.pbmm2.phased/summary.txt
+cat results/benchmarks/sniffles.ERR5043144.hifi.pbmm2.phased/summary.txt
+```
 
 
+```
+snakemake -p -j 8  results/benchmarks/pbsv.ERR5043144.hifi.pbmm2.phased/summary.txt
+cat results/benchmarks/pbsv.ERR5043144.hifi.pbmm2.phased/summary.txt
+```
+
+
+Let's complete the workflow to the end
+
+```
+snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
+```
