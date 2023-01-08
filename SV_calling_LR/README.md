@@ -101,7 +101,7 @@ The workflow expects the input files to be stored in samples_table.csv and subsa
 ```
   emacs config.yaml
 ```
-2. change the outputFolder and tempFolder to desired output folder. We can just leave the default options
+2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
 3. close by pressing ctrl+x then ctrl+c
 ## 6.3 Edit sample_table.csv
 We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a datasets. For each dataset, we add three comma sperated columns:
