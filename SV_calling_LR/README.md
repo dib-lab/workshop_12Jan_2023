@@ -160,7 +160,7 @@ run the following command
 ```
 snakemake -p  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/annotated/merged.vcf.gz
 ```
-you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individaully while explaining the workflow. 
+you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individually while explaining the workflow. 
 
 ## 6.6 Workflow basics
 
@@ -184,13 +184,13 @@ you should expect a dry snakemake run where all the commands will be printed. At
   
 ```
   
-* Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you cant follow up the workshop pace, just run the current command and snakemake will catch up. 
+* Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you can't follow up the workshop pace, just run the current command and snakemake will catch up. 
 
   
 # 7 Analysis of Oxford nanopore reads (ERR7091271) 
-## 7.1 Lets map the reads using minimap2
+## 7.1 Let's map the reads using minimap2
   
-First, Lets look at how the worklfow is going to map the ONT reads
+First, Let's look at how the workflow is going to map the ONT reads
 ```
 snakemake -np results/mapping/ERR7091271.ont.minimap2.bam
 ```
@@ -222,7 +222,7 @@ Let's check the number of detected variants
   gzip -dc results/clair3/ERR7091271.ont.minimap2.vcf.gz |grep -vP "^#" |wc -l 
 ```
   
-lets compare the calling result with our gold standard. Notice here that we added --use-conda to the command becuase this command need another conda environemnt
+let's compare the calling result with our gold standard. Notice here that we added --use-conda to the command because this command needs another conda environment
 ```
 snakemake -p -j1 results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv  --use-conda
 cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv
@@ -231,7 +231,7 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result
 
   
 ##  7.3 call SVs
-Our workfow supports sv calling using  sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and call sv on each haplotype independently. After that, Phased SV are joined. 
+Our workflow supports SV calling using sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and calling SVs on each haplotype independently. After that, Phased SVs are joined. 
 
 ![sv dag](sv_dag.png)
 
@@ -266,7 +266,7 @@ Let's check the number of detected variants
 Which tool produced the most variants?
 
 
-We can benchmark the result varaints against the gold standard using the following command  
+We can benchmark the result variants against the gold standard using the following command  
 ```
 snakemake -p -j 1  results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
 cat results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
@@ -279,19 +279,19 @@ Q: Which tool produces the best performance? What is the effect of phasing?
 
 
 ##  7.4 Calculate Population Allele Frequency
-Here we are going to calculating population allele frequency for the discovered structural and small variants by genotyping them in a cohort of short read samples. We are using our novel tool to do the population genotyping efficiently. We created a database of the kmers of 464 samples(aiming to  5000 samples). Our tool can utilize the created databases to genotype phased SV and small variants.  
+Here we are going to calculate population allele frequency for the discovered structural and small variants by genotyping them in a cohort of short-read samples. We are using our novel tool to do the population genotyping efficiently. We created a database of the kmers of 464 samples(aiming for 5000 samples). Our tool can utilize the created databases to genotype phased SV and small variants.  
 
-Here we are going to use a very small database of 10 samples.
+Here we are going to use a tiny database of 10 samples.
 ```
 snakemake -p -j 8 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
 ```
 
-lets take a peek on the result file
+let's take a peek at the result file
 ```
 gzip -dc results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head 
 ```
 
-or check the high frequent variants
+or check the highly frequent variants
 ```
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
@@ -299,18 +299,18 @@ bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.ERR7091271.ont.minima
 
 ## 7.5 annotate using VEP
 
-The last step in the workflow is use VEP to annotate the discovered variants with their effect on gene function.
+The last step in the workflow is to use VEP to annotate the discovered variants with their effect on gene function.
 
 ```
 snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
 ```
 
-lets view variants predicted to have high impact on gene function
+Let's view variants predicted to have a high impact on gene function
 ```
 bcftools view  results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |grep "HIGH" |less
 ```
 
-Q: how many variants have high impact on the gene function?
+Q: how many variants have a high impact on the gene function?
 
 
 
@@ -353,3 +353,5 @@ Let's complete the workflow to the end
 ```
 snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
 ```
+
+
