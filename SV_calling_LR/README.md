@@ -341,20 +341,8 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR5043144.hifi.minimap2/resul
 call SV using all the tools and run the benchmarking tool
 
 ```
-snakemake -p -j 8  results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
-cat results/benchmarks/cuteSV.ERR5043144.hifi.pbmm2.phased/summary.txt
-```
-
-
-```
-snakemake -p -j 8  results/benchmarks/sniffles.ERR5043144.hifi.pbmm2.phased/summary.txt
-cat results/benchmarks/sniffles.ERR5043144.hifi.pbmm2.phased/summary.txt
-```
-
-
-```
-snakemake -p -j 8  results/benchmarks/pbsv.ERR5043144.hifi.pbmm2.phased/summary.txt
-cat results/benchmarks/pbsv.ERR5043144.hifi.pbmm2.phased/summary.txt
+parallel --gnu -j1 'snakemake -p -j 8  results/benchmarks/{1}.ERR5043144.hifi.pbmm2.{2}/summary.txt' ::: pbsv cuteSV sniffles ::: phased unphased
+grep -P "precision|recall" results/benchmarks/*ERR5043144*/summary.txt 
 ```
 
 
