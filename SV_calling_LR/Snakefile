@@ -10,6 +10,7 @@ svCallingTools = config["svCallingTools"]
 
 vep_extra = config["vep"]["extra"]
 vep_plugins = config["vep"]["plugins"]
+vep_prefix= config["vep"]["path"]
 
 reference = list(filter(lambda x: x.sample_type == "ref",pep.samples))[0].file[0]
 reference_gff = list(filter(lambda x: x.sample_type == "gff",pep.samples))[0].file[0]
@@ -257,7 +258,7 @@ rule clair3:
     shell:
         """
 		mkdir -p {tempFolder}clair$$/
-		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
+		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=$(which longphase) --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
 		tabix -p vcf {output.vcf}
 		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
@@ -297,11 +298,11 @@ rule concatStrucralandSmallVariants:
     input:
         small_vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz",
         small_tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.phased.filtered.vcf.gz.tbi",
-        SV_vcf=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz",
-        SV_tbi=outputFolder + "cuteSV/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi"
+        SV_vcf=outputFolder + "{callingTool}/{sample}.{tech}.{mapping}.phased.vcf.gz",
+        SV_tbi=outputFolder + "{callingTool}/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi"
     output:
-        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
-        tbi=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz.tbi"
+        vcf=outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.vcf.gz",
+        tbi=outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.vcf.gz.tbi"
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -309,7 +310,7 @@ rule concatStrucralandSmallVariants:
     conda:
         "envs.yaml"
     log:
-        outputFolder + "variants/{sample}.{tech}.{mapping}.concat.log"
+        outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.concat.log"
     threads: 16
     resources:
         mem_mb=30000,cores=16
@@ -346,7 +347,7 @@ rule haplotag_longphase:
         mem_mb=10000,cores=16
     shell:
         """
-		/home/mshokrof/workshop_12Jan_2023/tools/longphase_linux-x64 haplotag -s {input.phasedVcf} -b {input.bam}   -t {threads} -o {params.bamPrefix}
+		longphase haplotag -s {input.phasedVcf} -b {input.bam}   -t {threads} -o {params.bamPrefix}
 		samtools index {output.bam}
 	"""
 
@@ -574,20 +575,20 @@ rule sniffles:
 
 rule annotate_variants_VEP:
     input:
-        calls=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.vcf.gz",
-        cache="../tools/vep/cache",
-        plugins="../tools/vep/plugins"
+        calls= outputFolder + "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/merged.vcf.gz",
+        cache= vep_prefix + "cache",
+        plugins= vep_prefix + "plugins"
     params:
         plugins=vep_plugins,
         extra=vep_extra
     output:
         calls=report(
-            outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.vcf.gz",
+            outputFolder + "variants/annotated/{graph}.{callingTool}.{sample}.{tech}.{mapping}/merged.vcf.gz",
             caption="report/vcf.rst",
             category="Calls",
             ),
         stats=report(
-            outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/merged.stats.html",
+            outputFolder + "variants/annotated/{graph}.{callingTool}.{sample}.{tech}.{mapping}/merged.stats.html",
             caption="report/stats.rst",
             category="Calls"
         )
@@ -596,7 +597,7 @@ rule annotate_variants_VEP:
         mapping=mappingTools,
         sample=sampleNames
     log:
-        outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/annotated/log"
+        outputFolder + "variants/annotated/{graph}.{callingTool}.{sample}.{tech}.{mapping}/log"
     threads: 4
     wrapper:
         "0.74.0/bio/vep/annotate"
@@ -608,18 +609,14 @@ rule annotate_variants_VEP:
 
 rule remove_errors_variants:
     input:
-        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.vcf.gz",
+        vcf=outputFolder + "{prefix}.vcf.gz",
         ref=reference
     output:
-        outputFolder + "variants/{sample}.{tech}.{mapping}.checked.vcf"
-    wildcard_constraints:
-        tech="hifi|ont|clr",
-        mapping=mappingTools,
-        sample=sampleNames
+        outputFolder + "{prefix}.checked.vcf"
     conda:
         "envs.yaml"
     log:
-        outputFolder + "variants/{sample}.{tech}.{mapping}.checked.log"
+        outputFolder + "{prefix}.checked.log"
     threads: 1
     shell:
         """
@@ -631,17 +628,16 @@ rule remove_errors_variants:
 
 rule populationGenotyping:
     input:
-        vcf=outputFolder + "variants/{sample}.{tech}.{mapping}.checked.vcf",
+        vcf=outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.checked.vcf",
         ref=reference,
         graph=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["graph"],
         annotation=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["annotation"],
         desc=lambda wildcards: graphsFiles[f"{wildcards.graph}"]["desc"]
     output:
-        out=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.vcf.gz",
-        outHQ=outputFolder+"variants/GG/{graph}.{sample}.{tech}.{mapping}/merged.HQ.vcf.gz"
+        out=outputFolder + "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/merged.vcf.gz"
     params:
-        outPrefix=outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/{graph}",
-        outFolder=outputFolder+ "variants/GG/{graph}.{sample}.{tech}.{mapping}/"
+        outPrefix=outputFolder + "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/{graph}",
+        outFolder=outputFolder+ "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/"
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -650,7 +646,7 @@ rule populationGenotyping:
     conda:
         "envs.yaml"
     log:
-        outputFolder + "variants/GG/{graph}.{sample}.{tech}.{mapping}/log"
+        outputFolder + "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/log"
     threads: 32
     conda:
         "envs.yaml"
@@ -663,13 +659,10 @@ rule populationGenotyping:
     shell:
         """
 	rm -f {params.outPrefix}*vcf
-	../tools/PanGenie -g -a {input.annotation} -i {input.graph} -f {input.desc} -j {threads} -t {threads} -r {input.ref} -v {input.vcf} -o {params.outPrefix}  &> {log}
 	mkdir -p  {params.outFolder}
-	ls {params.outPrefix}*.vcf | parallel --gnu -j {threads} 'bcftools view -i "FMT/GQ>=200" -O z -o {params.outFolder}{{/}}.gz {{}} && tabix  -f -p vcf {params.outFolder}{{/}}.gz'
+	../tools/TheGreatGenotyper -g -a {input.annotation} -i {input.graph} -f {input.desc} -j {threads} -t {threads} -r {input.ref} -v {input.vcf} -o {params.outPrefix}  &> {log}
 	ls {params.outPrefix}*.vcf | parallel --gnu -j {threads} 'bgzip -f {{}} && tabix  -f -p vcf {{}}.gz'
-	
 	../tools/populationMerge.sh {output.out} {params.outPrefix}*vcf.gz &>>{log}
-	../tools/populationMerge.sh {output.outHQ} {params.outFolder}*.gz &>>{log}	 
 	"""
 
 
@@ -773,62 +766,10 @@ rule svAnalyzerUnioin:
      """
 
 
-# rule convertToMLTSV:
-#     input:
-#         vcf=outputFolder + "SURVIVOR/allToolsUnion.all.vcf",
-#         manta=outputFolder + "manta/merged.illumina.candidateSV.PERCISE.vcf",
-#         delly=outputFolder + "delly/merged.illumina.PERCISE.vcf",
-#         gridss=outputFolder + 'gridss/merged.illumina.filtered.vcf',
-#         pbsv=outputFolder + "pbsv/varints.PERCISE.vcf",
-#         cuteSV=outputFolder + "cuteSV/variants.hifi.PERCISE.vcf",
-#         sniffles=outputFolder + "sniffles/variants.hifi.PERCISE.vcf",
-#     #	 repeats= reference_repeats
-#     output:
-#         training=outputFolder + "SURVIVOR/allToolsUnion.all.tsv.gz"
-#     conda:
-#         "../envs/survivor.yaml"
-#     resources:
-#         mem_mb=4000,cores=1
-#     log: outputFolder + "SURVIVOR/allToolsUnion.all.tsv.log"
-#     shell:
-#         """
-#  python ../createBenchmarkTable.py {input.vcf} svim pbsv cuteSV manta delly gridss  > tmp.$$.tsv 2> {log}
-#  python ../addPbsvSpecificData.py tmp.$$.tsv {input.pbsv} > tmp2.$$.tsv 2>> {log}
-#  python ../addCallerSpecificData.py tmp2.$$.tsv {input.sniffles} sniffles ../snifflesInfoFields ../snifflesSampleFields > tmp3.$$.tsv 2>> {log}
-#  python ../addCallerSpecificData.py tmp3.$$.tsv {input.cuteSV} cuteSV ../cuteVSInfo ../cuteVSExtra > tmp4.$$.tsv 2>> {log}
-#  python ../addCallerSpecificData.py tmp4.$$.tsv {input.manta} manta ../mantaInfo  ../mantaSample > tmp5.$$.tsv 2>> {log}
-#  python ../addCallerSpecificData.py tmp5.$$.tsv {input.delly} delly ../dellyInfo  ../dellySamples > tmp6.$$.tsv 2>> {log}
-#  python ../addCallerSpecificData.py tmp6.$$.tsv {input.gridss} gridss ../gridssInfo  ../gridssSample > tmp7.$$.tsv 2>> {log}
-#  python ../addRepeatAnnotation.py tmp7.$$.tsv {input.repeats} > tmp8.$$.tsv
-#  python ../createTrainingSet.py tmp8.$$.tsv all training  2>> {log} |gzip > {output.training}
-#  rm tmp*.$$.tsv
-#      """
 
 
 ### BAM utilities
 
-# rule merge:
-#     input:
-#          samples=lambda wildcards: mergeInput[f"{wildcards.type}"],
-# 	 ref = reference
-#     output:
-#          bam=outputFolder+"mapping/merged.{type}.bam",
-#          bai=outputFolder+"mapping/merged.{type}.bam.bai"
-#     conda:
-#          "envs.yaml"
-#     log:
-#         outputFolder+"mapping/merged.{type}.log"
-#     resources:
-#          mem_mb= 200000, cores =8
-#     threads: 8	 
-#     shell:
-#        	        """
-# 		mkdir -p {tempFolder}$$/		
-# 		cp {input.samples} {tempFolder}$$/
-# 		samtools merge   -O BAM --reference {input.ref} --threads {threads} {output.bam} {tempFolder}$$/*bam &> {log}
-# 		samtools index {output.bam}
-# 		rm {tempFolder}$$/ -r		
-#                 """
 
 
 rule alfredQC:
@@ -921,4 +862,31 @@ rule benchmarkSV:
         """
 	    rm -rf {params.outFolder}
 	    truvari bench -b {input.goldStandard} -c {input.vcf}  -o {params.outFolder} --passonly  -r 2000 -C 3000  --reference {input.ref} &> {log}
+        """
+
+
+rule benchmarkSmallVariants:
+    input:
+        vcf=outputFolder+ "{tool}/{options}.vcf.gz",
+        ref=reference,
+        goldStandard=goldStandardVCF,
+        goldStandardIndex=goldStandardVCF+".tbi"
+    output:
+        outputFolder+ "benchmarks_small/{tool}.{options}/result.summary.csv"
+    params:
+        outFolder = outputFolder+ "benchmarks_small/{tool}.{options}/"
+    wildcard_constraints:
+        tool="clair3"
+    conda:
+        "happy.yaml"
+    resources:
+        mem_mb=5000,cores=1
+    log:
+        outputFolder + "benchmarks_small/{tool}.{options}.log"
+    threads: 1
+    shell:
+        """
+	    rm -rf {params.outFolder}
+	    mkdir -p {params.outFolder}
+	    hap.py --threads 1 -r {input.ref} -o {params.outFolder}result --engine=vcfeval --pass-only -l 25 ~/sv/cattle-sv/datasets/pangenome/multisample-vcfs/NxB_only/graph-filtered.smallvariants.25.vcf.gz {input.vcf} &> {log}
         """
