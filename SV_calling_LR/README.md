@@ -2,6 +2,10 @@
 We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore.  We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
 
 ## Aims
+1. learn how to call and phase SVs using the different sv callers
+2. compare the performance of different methods
+3. learn how to calculate population allele frequency for cattle SVs
+4. learn how to predict the impact of SV on genes
 
 
 # 2) Significance 
