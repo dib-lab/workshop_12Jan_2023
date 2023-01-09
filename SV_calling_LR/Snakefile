@@ -664,7 +664,6 @@ rule remove_errors_variants:
 	rm tmp.$$.vcf
 	"""
 
-
 rule populationGenotyping:
     input:
         vcf=outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.checked.vcf",
