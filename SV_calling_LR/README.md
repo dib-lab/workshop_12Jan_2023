@@ -1,21 +1,30 @@
 # 1) Intro
-We are going to learn how to study structural variants (SV) in cattle genomes using long reads from Pacbio and Oxford Nanopore.  We are going to discover and phase  small variants and SVs using state of the art tools. After that, we are going to calculate population allele frequencies using novel population genotyper tool (The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitate studying the functional impact of the SVs.
+
+We are going to learn how to study structural variants (SV) in cattle
+genomes using long reads from Pacbio and Oxford Nanopore.  We are
+going to discover and phase small variants and SVs using state of the
+art tools. After that, we are going to calculate population allele
+frequencies using a novel population genotyper tool (The Great
+Genotyper).  Lastly, we are going to functionally annotate the
+variants to facilitate studying the functional impact of the SVs.
 
 ## Aims
+
 1. learn how to call and phase SVs using the different SV callers
 2. compare the performance of different methods
 3. learn how to calculate population allele frequency for cattle SVs
 4. learn how to predict the impact of SV on genes
 
-
 # 2) Significance 
-* Novel way of calculating Population AF without needing  databases like genomAD, and more accurate too.
-* Variants will be richly annotated with AF and functional impact making it perfect for studying functional impact of the SVs.
+
+* Novel way of calculating Population AF without needing databases like genomAD, and more accurate too.
+* Variants will be richly annotated with AF and predicted functional impact making it perfect for studying functional impact of the SVs.
 * Workflow is benchmarked on cattle data and achieving accuracy of ~ 90%.
 * Workflow is implemented using snakemake to make it simpler to run it afterward with your data and tweak it as you want.
 
 # 3) Terminology
-* haplotype-resolved assembly:
+
+* haplotype-resolved assembly
 * Structural Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
 * Phased variant
 * Population Allele frequency
@@ -25,11 +34,17 @@ We are going to learn how to study structural variants (SV) in cattle genomes us
 * Population genotyping 
 
 
-
 # 4) Data Description 
-We chose sequencing datasets from  the haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: 
-1. We can create a gold standard benchmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
-2. The sample was heavily sequenced using Illumina, Pacbio(HIFI), and oxford Nanopore which allows us to compare the results of different methods.  
+
+We chose sequencing datasets from the haplotype-resolved assembly
+project (PRJEB42335) of Nellore and Brown_Swiss cross for two reasons:
+
+1. We can create a gold standard benchmark by calling the variants
+   from the haplotype-resolved assemblies which is considered to be
+   the most accurate method (Figure 1).
+
+2. The sample was heavily sequenced using Illumina, Pacbio(HIFI), and Oxford
+   Nanopore which allows us to compare the results of different methods.  
 
 |<img src="sv_callers.jpg" alt="sv" width="500"/>|
 |:--:|
@@ -37,12 +52,13 @@ We chose sequencing datasets from  the haplotype-resolved assembly project(PRJEB
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
 |
 
-Test Input data for the workshop can be downloaded from the following link and they are available on farm on
+Test input data for the workshop is available on farm at:
 ```
 /home/mshokrof/workshop_12Jan_2023_data/
 ```
 
-The following table describes the downloaded files 
+The following table describes the test input file:
+
 | file        |  Description  |
 |:-------------:|:-------------|
 | ARS-UCD1.2_Btau5.0.1Y.25.fa | Chromosome 25 from ARS-UCD1.2 genome|
@@ -60,11 +76,15 @@ The following table describes the downloaded files
 | cattle_bosgroup_10/graph.desc.tsv |  file contains the Biosample ids|
 | vep/ | vep annotation data|
 
-we  created a downsampled the data for the sake of the workshop. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples).
+We created a downsampled the data for the sake of this workshop. We
+are going to focus on chromsome 25 only, and we are going to calculate
+the AF in 30 samples (but we can scale to 4000 samples).
 
 # 5) Workflow:
 
-All the tutorial commands are written as Snakemake recipes. The workflow(summarized in Figure 2) has the following steps: 
+All the tutorial commands are written as Snakemake recipes. The
+workflow (summarized in Figure 2) has the following steps:
+
   1. map using minimap2/pbmm2
   2. call small variants using clair3 and phase them using longshot
   3. split the reads into two haplotypes
@@ -76,16 +96,19 @@ All the tutorial commands are written as Snakemake recipes. The workflow(summari
 ![worflow_dag](dag.png)
 
 
-
- 
 # 6) Let's start configurations
+
 ## 6.1 Installing the environment
+
 1. clone this repo:
+
 ```
-git clone git@github.com:dib-lab/workshop_12Jan_2023.git
+git clone https://github.com/dib-lab/workshop_12Jan_2023.git
 cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
+
 2. create the conda environment and install the tools
+
 ```
 conda install mamba -n base -c conda-forge
 mamba env create -f envs.yaml
@@ -95,19 +118,29 @@ conda activate cattle_sv
 3. make sure that you can access the input files
 
 ```
-  ls -lsah /home/mshokrof/workshop_12Jan_2023_data/*
+ls /home/mshokrof/workshop_12Jan_2023_data/
 ```
 
-The workflow expects the input files to be stored in samples_table.csv and subsample_table.csv, and the configurations in config.yaml.
+The workflow expects the input files to be stored in
+`samples_table.csv` and `subsample_table.csv`, and the configurations
+in `config.yaml`.
+
 ## 6.2 Edit config.yaml
 1. open config.yaml using emacs/vim
 ```
-  emacs config.yaml
+emacs config.yaml
 ```
+
 2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
+
 3. close by pressing ctrl+x then ctrl+c
+
 ## 6.3 Edit sample_table.csv
-We should fill sample_table.csv with the metadata about our datasets. It is in csv format where each row represents a dataset. For each dataset, we add three comma separated columns:
+
+We should fill `sample_table.csv` with the metadata about our
+datasets. It is in csv format where each row represents a dataset. For
+each dataset, we add three comma separated columns:
+
 1. sample_name: id for each dataset
 2. sample_type: we define here the type for the datasets using the following types
 
@@ -120,13 +153,14 @@ We should fill sample_table.csv with the metadata about our datasets. It is in c
     | ont      | Oxford Nanopore sample |
     | hifi     | Pacbio Hifi sample|
     | clr      | Pacbio CLR sample|
+
 3. bioSample: the biosample id of each dataset. 
 
+We are going to define 8 datasets: reference genome, repeat
+annotation, gene annotation, gold standard vcf format, gold standard
+bed format, ont sample, hifi sample, and a cohort graph.
 
-we are going to define 8 datasets: reference genome, repeat annotation, gene annotation, gold standard vcf format, gold standard bed format, ont sample,  hifi sample, and a cohort graph. 
-
-
-Open sample_table.csv and Paste the following lines under the header:
+Open sample_table.csv and paste the following lines under the header:
 ```
 ucd1.2,ref,SAMN03145444
 ucd1.2_gff,gff,SAMN03145444
@@ -136,10 +170,14 @@ ERR5043144,hifi,SAMEA7765441
 ERR7091271,ont,SAMEA7765441
 cattle_taurus_10,graph,COHORT
 ```
-Make sure that you specify the sample_type correctly because it changes execution of the workflow. For example, specifying ERR5043144 as hifi will change the mapping tool to pbmm2 and calling parameters in cuteSV.
+
+The sample_type selects the workflow to execute - for example,
+incorrectly specifying ERR5043144 as hifi will change the mapping tool
+to pbmm2 and will call SVs with cuteSV.
 
 
 ## 6.4 Edit subsample_table.csv
+
 we are going to specify the files for each dataset. 
 open subsample_table.csv using emacs and  copy paste the following lines under the header line
 
@@ -157,52 +195,69 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 ```
 
 ## 6.5 Make sure that configuration is correct
-run the following command
+
+Run the following command
 ```
-snakemake -p  -np   results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
+snakemake -np   results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
-you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individually while explaining the workflow. 
+
+This will print out all of the commands that snakemake will run,
+without actually running them. If there are any configuration problems,
+you will find out here!
+
+At this step you can run the entire workflow with one command
+"snakemake -j 8". However, we are going to run each step individually
+while explaining the workflow!
 
 ## 6.6 Workflow basics
 
 * The commands to run the workflow consists of two parts: running mode, and output files path.
 * running mode can be either 
     * "-np" instructs snakemake to print the commands and parameters without running anything  
-    * "-j 8" instructs snakemake to run the script using 16 threads
-* outpath files path follows the pattern the following
+    * "-j 8" instructs snakemake to run the script using 8 threads
+* outpath files path follows the following pattern:
 <img src="snakemake_path.png" alt="sv" width="700"/>
 
 
+For example,
 ```
-  # print commands to map ERR5043144  using pbmm2
-   snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam 
+<<<<<<< Updated upstream
+# print commands to map ERR5043144  using pbmm2
+snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam 
   
-  # print commands to map ERR5043144  using pbmm2 and add haplotag(H0,H1) to the reads
-   snakemake -np results/mapping/ERR5043144.hifi.pbmm2.phased.bam 
+# print commands to map ERR5043144  using pbmm2 and add haplotag(H0,H1) to the reads
+snakemake -np results/mapping/ERR5043144.hifi.pbmm2.phased.bam 
   
-  # print commands to map ERR7091271 sample using minimap2
-  snakemake -np results/mapping/ERR7091271.ont.minimap2.bam 
+# print commands to map ERR7091271 sample using minimap2
+nakemake -np results/mapping/ERR7091271.ont.minimap2.bam 
   
+# print commands to map ERR7091271 sample using minimap2
+snakemake results/mapping/ERR7091271.ont.minimap2.bam -np
 ```
   
-* Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you can't follow up the workshop pace, just run the current command and snakemake will catch up. 
+Note: Snakemake will automatically determine all the required
+preceding steps in the workflow and execute them.  If you can't
+follow at the workshop pace, just run the current command and
+snakemake will catch up.
 
-  
 # 7 Analysis of Oxford Nanopore reads (ERR7091271) 
+
 ## 7.1 Let's map the reads using minimap2
   
-First, Let's look at how the workflow is going to map the ONT reads
+First, let's look at how the workflow is going to map the ONT reads
 ```
 snakemake -np results/mapping/ERR7091271.ont.minimap2.bam
 ```
-As you can see, the workflow will start by creating an index for the reference genome and then using it to map the reads. 
-to actually run the command remove "-np" from the previous command and add '-j8' instead. Snakemake will use 8 threads to run the steps
 
+As you can see, the workflow will start by creating an index for the
+reference genome and then using it to map the reads.  to actually run
+the command remove "-np" from the previous command and add '-j 8'
+instead. Snakemake will use 8 different CPUs to run the steps.
   
-Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/)
+Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/).
 
 ```
-snakemake  -p -j1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
+snakemake  -p -j 1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 cat results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ``` 
 
@@ -211,31 +266,38 @@ Q: What is the median coverage?  and median read length?
 
 ## 7.2 Call and phase small variants using clair3 and longphase
 
-Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased SNPs. It uses longshot to phase the small variants
+The Clair3 step takes the bam file as input and it produces two vcf files: phased and unphased SNPs. It uses longshot to phase the small variants
 Use the following command to run Clair3  
 ```
-snakemake -p -j8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
+snakemake -p -j 8 results/clair3/ERR7091271.ont.minimap2.vcf.gz
 ```
+@CTB note: revisit this section.
   
 Let's check the number of detected variants
+
+```
+gzip -dc results/clair3/ERR7091271.ont.minimap2.vcf.gz |grep -vP "^#" |wc -l 
+```
   
+Let's compare the calling result with our gold standard. Notice here
+that we added --use-conda to the command because this command needs
+another conda environment:
 ```
-  gzip -dc results/clair3/ERR7091271.ont.minimap2.vcf.gz |grep -vP "^#" |wc -l 
-```
-  
-let's compare the calling result with our gold standard. Notice here that we added --use-conda to the command because this command needs another conda environment
-```
-snakemake -p -j1 results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv  --use-conda
+snakemake -p -j 1 results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv  --use-conda
 cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv
 ```
-
-
+@CTB note: --use-conda
   
 ##  7.3 call SVs
-Our workflow supports SV calling using sniffles, and cuteSV. We are going to try all of them and compare their performance. Only sniffles can produce phased SV when running on haplotagged long reads. I developed a hack for the other tools by splitting the bam files and calling SVs on each haplotype independently. After that, Phased SVs are joined. 
+
+Our workflow supports SV calling using sniffles, and cuteSV. We are
+going to try all of them and compare their performance. Only sniffles
+can produce phased SV when running on haplotagged long reads. I
+developed a hack for the other tools by splitting the bam files and
+calling SVs on each haplotype independently. After that, phased SVs
+are joined.
 
 ![sv dag](sv_dag.png)
-
 
 Let's first check the normal running of cuteSV and sniffles
 ```
@@ -246,19 +308,19 @@ snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.unphased.vcf.gz
 snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.unphased.vcf.gz
 ```
 
-Let's run give sniffles the phasing option
+Let's run sniffles with the phasing option:
 
 ```
 snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz
 ```
   
-Let's run the workflow for phased cuteSV 
+Let's run the workflow for phased cuteSV:
   
 ```
 snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
 ```
 
-Let's check the number of detected variants
+Let's check the number of detected variants:
   
 ```
   gzip -dc  results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
@@ -266,50 +328,56 @@ Let's check the number of detected variants
 
 Which tool produced the most variants?
 
-
 We can benchmark the result variants against the gold standard using the following command  
 ```
 snakemake -p -j 1  results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
 cat results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
 ```
 
-
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
-benchmark the results of the phased and unphased variants for both tools and run the following command to view the results 
+Benchmark the results of the phased and unphased variants for both
+tools and run the following command to view the results:
+
 ```
 grep -P "precision|recall" results/benchmarks/*ERR7091271*/summary.txt
 ```
 
-
 ##  7.4 Calculate Population Allele Frequency
-Here we are going to calculate population allele frequency for the discovered structural and small variants by genotyping them in a cohort of short-read samples. We are using our novel tool to do the population genotyping efficiently. We created a database of the kmers of 464 samples(aiming for 5000 samples). Our tool can utilize the created databases to genotype phased SV and small variants.  
+
+Here we are going to calculate population allele frequency for the
+discovered structural and small variants by genotyping them in a
+cohort of short-read samples. We are using our novel tool to do the
+population genotyping efficiently. We created a database of the kmers
+of 464 samples(aiming for 5000 samples). Our tool can utilize the
+created databases to genotype phased SV and small variants.
 
 Here we are going to use a tiny database of 10 samples.
 ```
 snakemake -p -j 8 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
 ```
 
-let's take a peek at the result file
+let's take a peek at the result file:
 ```
 gzip -dc results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head
 ```
 
-or check the highly frequent variants
+or check the highly frequent variants:
 ```
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
 
-
 ## 7.5 annotate using VEP
 
-The last step in the workflow is to use VEP to annotate the discovered variants with their effect on gene function.
+The last step in the workflow is to use VEP to annotate the discovered
+variants with their effect on gene function.
 
 ```
 snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
 
-Let's view variants predicted to have a high impact on gene function
+Let's view variants predicted to have a high impact on gene function:
+
 ```
 bcftools view  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz |grep -vP "^#" |grep "HIGH" |less
 ```
@@ -355,5 +423,3 @@ Let's complete the workflow to the end
 ```
 snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR5043144.hifi.pbmm2/merged.vcf.gz
 ```
-
-
