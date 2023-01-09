@@ -1,24 +1,14 @@
 # Downstream analysis
-Snakemake workflow will create vcf files containing small and structral variants annotated with their AF and predicted functional impact. Here we are going to go through how to navigate those vcfs.
+We create a vcf file containing small and structral variants annotated with their AF and predicted functional impact. Here we are going to go through how to explore those variants.
 
-## General analysis
-Calculate the total number of variants
-```
-bcftools view <input.vcf> |grep -vP '^#' |wc -l
-```
 
-Calcualte number of variants per chromsome
-```
-bcftools view <input.vcf> |grep -vP '^#' |cut -f1 |uniq -c
-```
-
-Filter SV
+If we one want to work on the SV, we can filter the vcf using this command from gatk
 ```
 gatk SelectVariants -V <input.vcf> --select-type-to-include INDEL --min-indel-size 50 -O output.vcf
 ```
 
-## Visualize SVs
-
+# Visualize SVs
+We benchmarked the 
 ###samplot
 
 ## plot a SV
