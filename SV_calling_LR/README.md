@@ -134,6 +134,7 @@ ucd1.2_rmsk,rmsk,SAMN03145444
 NxB,gold,SAMEA7765441
 ERR5043144,hifi,SAMEA7765441
 ERR7091271,ont,SAMEA7765441
+cattle_taurus_10,graph,COHORT
 ```
 Make sure that you specify the sample_type correctly because it changes execution of the workflow. For example, specifying ERR5043144 as hifi will change the mapping tool to pbmm2 and calling parameters in cuteSV.
 
@@ -158,7 +159,7 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 ## 6.5 Make sure that configuration is correct
 run the following command
 ```
-snakemake -p  -np  results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/annotated/merged.vcf.gz
+snakemake -p  -np   results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
 you should expect a dry snakemake run where all the commands will be printed. At this step you can run the workflow with one command "snakemake -j16". However, We are going to run each step individually while explaining the workflow. 
 
@@ -174,13 +175,13 @@ you should expect a dry snakemake run where all the commands will be printed. At
 
 ```
   # print commands to map ERR5043144  using pbmm2
-   snakemake results/mapping/ERR5043144.hifi.pbmm2.bam -np
+   snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam 
   
   # print commands to map ERR5043144  using pbmm2 and add haplotag(H0,H1) to the reads
-   snakemake results/mapping/ERR5043144.hifi.pbmm2.phased.bam -np
+   snakemake -np results/mapping/ERR5043144.hifi.pbmm2.phased.bam 
   
   # print commands to map ERR7091271 sample using minimap2
-  snakemake results/mapping/ERR7091271.ont.minimap2.bam -np
+  snakemake -np results/mapping/ERR7091271.ont.minimap2.bam 
   
 ```
   
@@ -275,7 +276,10 @@ cat results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
-
+benchmark the results of the phased and unphased variants for both tools and run the following command to view the results 
+```
+grep -P "precision|recall" results/benchmarks/*ERR7091271*/summary.txt
+```
 
 
 ##  7.4 Calculate Population Allele Frequency
@@ -288,12 +292,12 @@ snakemake -p -j 8 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.min
 
 let's take a peek at the result file
 ```
-gzip -dc results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head 
+gzip -dc results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head
 ```
 
 or check the highly frequent variants
 ```
-bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
+bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
 
 
@@ -302,30 +306,15 @@ bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.ERR7091271.ont.minima
 The last step in the workflow is to use VEP to annotate the discovered variants with their effect on gene function.
 
 ```
-snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
+snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
 
 Let's view variants predicted to have a high impact on gene function
 ```
-bcftools view  results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |grep "HIGH" |less
+bcftools view  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz |grep -vP "^#" |grep "HIGH" |less
 ```
 
 Q: how many variants have a high impact on the gene function?
-
-Let's download the VEP report and check it. 
-
-First get the full path of the report
-```
-readlink -f results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.stats.html
-```
-
-Open a new terminal and download the report from the server
-```
-scp <your_username>@farm:<path> ./
-```
-
-open the report with web explorer(chrome, firefox, or edge).
-
 
 
 
@@ -364,7 +353,7 @@ grep -P "precision|recall" results/benchmarks/*ERR5043144*/summary.txt
 Let's complete the workflow to the end
 
 ```
-snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz
+snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR5043144.hifi.pbmm2/merged.vcf.gz
 ```
 
 

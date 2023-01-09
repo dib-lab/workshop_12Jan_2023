@@ -84,7 +84,7 @@ for s in LRSamples:
             newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
             #vcfs.append(newvcf)
             for g in graphs:
-                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s/merged.vcf.gz" % (g, s.sample_name, s.sample_type, mappingTool)
+                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s.%s/merged.vcf.gz" % (g,toolName, s.sample_name, s.sample_type, mappingTool)
                 vcfs.append(popVCF)
 
 callingNames= "|".join(callingNames)
@@ -231,12 +231,17 @@ clair3Models={
     "ont": "r941_prom_hac_g360+g422"
 }
 
+cacheFolder="/home/mshokrof/workshop_12Jan_2023_data/"
 rule clair3:
     input:
         bam=lambda wildcards: getBAM(wildcards,"clair3"),
         bai=lambda wildcards: getBAI(wildcards,"clair3"),
         ref=reference,
-        refIndex=reference + ".fai"
+        refIndex=reference + ".fai",
+        vcf=cacheFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz",
+        tbi=cacheFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz.tbi",
+        phasedVcf=cacheFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz",
+        phasedTbi=cacheFolder + "clair3/{sample}.{tech}.{mapping}.phased.vcf.gz.tbi",	
     output:
         vcf=outputFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz",
         tbi=outputFolder + "clair3/{sample}.{tech}.{mapping}.vcf.gz.tbi",
@@ -257,13 +262,17 @@ rule clair3:
         mem_mb=30000,cores=32
     shell:
         """
-		mkdir -p {tempFolder}clair$$/
-		run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=$(which longphase) --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
-		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
-		tabix -p vcf {output.vcf}
-		bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
-		tabix -p vcf {output.phasedVcf} 
-		rm {tempFolder}clair$$/ -r
+		# mkdir -p {tempFolder}clair$$/
+		# run_clair3.sh --bam_fn={input.bam} --ref_fn={input.ref} --threads={threads} --platform="{wildcards.tech}" --model_path="${{CONDA_PREFIX}}/bin/models/{params.model}" --enable_phasing --longphase_for_phasing  --longphase=$(which longphase) --include_all_ctgs  --output={tempFolder}clair$$/ &> {log} 
+		# bcftools reheader --samples <(echo {wildcards.sample}) -o {output.vcf} {tempFolder}clair$$/merge_output.vcf.gz
+		# tabix -p vcf {output.vcf}
+		# bcftools reheader --samples <(echo {wildcards.sample}) -o {output.phasedVcf} {tempFolder}clair$$/phased_merge_output.vcf.gz
+		# tabix -p vcf {output.phasedVcf} 
+		# rm {tempFolder}clair$$/ -r
+		cp {input.vcf} {output.vcf}
+		cp {input.tbi} {output.tbi}
+		cp {input.phasedVcf} {output.phasedVcf}
+		cp {input.phasedTbi} {output.phasedTbi}
 	"""
 
 
@@ -605,6 +614,36 @@ rule annotate_variants_VEP:
 
 # Pass a list of plugins to use, see https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
 # Plugin args can be added as well, e.g. via an entry "MyPlugin,1,FOO", see docs.
+
+rule annotate_variants_VEP_General:
+    input:
+        calls= "{prefix}.vcf.gz",
+        cache= vep_prefix + "cache",
+        plugins= vep_prefix + "plugins"
+    params:
+        plugins=vep_plugins,
+        extra=vep_extra
+    output:
+        calls=report(
+            "{prefix}.vep.vcf.gz",
+            caption="report/vcf.rst",
+            category="Calls",
+            ),
+        stats=report(
+            "{prefix}.vep.html",
+            caption="report/stats.rst",
+            category="Calls"
+        )
+    log:
+        "{prefix}.vep.log"
+    threads: 4
+    wrapper:
+        "0.74.0/bio/vep/annotate"
+
+
+# Pass a list of plugins to use, see https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
+# Plugin args can be added as well, e.g. via an entry "MyPlugin,1,FOO", see docs.
+
 
 
 rule remove_errors_variants:

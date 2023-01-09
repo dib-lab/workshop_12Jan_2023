@@ -26,7 +26,7 @@ snakemake -np ../results/LR_calling/samplot/DEL_25_41669173_41669210.png
 ### ribbon
 
 ## Population Frequency
-The Great Genotyper estimate the genotypes for the found variants in 500 cattle samples. We used bcftools to calculate some metrics using the genotypes. Variants at [path] are tagged by the following metadata. 
+The Great Genotyper estimate the genotypes for the found variants in 464 cattle samples. We used bcftools to calculate some metrics using the genotypes. Variants at [path] are tagged by the following metadata. 
 | Metadata      | Description |
 | -- |:-----------:|
 | AC | Allele count in genotypes|
