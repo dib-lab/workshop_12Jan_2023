@@ -926,5 +926,5 @@ rule benchmarkSmallVariants:
         """
 	    rm -rf {params.outFolder}
 	    mkdir -p {params.outFolder}
-	    hap.py --threads 1 -r {input.ref} -o {params.outFolder}result --engine=vcfeval --pass-only -l 25 ~/sv/cattle-sv/datasets/pangenome/multisample-vcfs/NxB_only/graph-filtered.smallvariants.25.vcf.gz {input.vcf} &> {log}
+	    hap.py --threads 1 -r {input.ref} -o {params.outFolder}result --engine=vcfeval --pass-only -l 25 {input.goldStandard} {input.vcf} &> {log}
         """
