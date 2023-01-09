@@ -1,5 +1,5 @@
 # 1) Intro
-We are going to learn how to study structral variants(SV) in cattle genomes using long reads from Pacbio and Oxford nanpore.  We are going to discover and phase  small variants, and SVs using state of the art tools. After that, We are going to calculate population allele frequencies using novel population genotyper tool(The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitatle studying the functional impact of the SVs.
+We are going to learn how to study structural variants (SV) in cattle genomes using long reads from Pacbio and Oxford Nanopore.  We are going to discover and phase  small variants and SVs using state of the art tools. After that, we are going to calculate population allele frequencies using novel population genotyper tool (The Great Genotyper).  Lastly, We are going to functionally annotate the variants to facilitate studying the functional impact of the SVs.
 
 ## Aims
 1. learn how to call and phase SVs using the different SV callers
@@ -11,12 +11,12 @@ We are going to learn how to study structral variants(SV) in cattle genomes usin
 # 2) Significance 
 * Novel way of calculating Population AF without needing  databases like genomAD, and more accurate too.
 * Variants will be richly annotated with AF and functional impact making it perfect for studying functional impact of the SVs.
-* Workflow is benchmarked on cattle data and achiving accurcy of ~ 90%.
+* Workflow is benchmarked on cattle data and achieving accuracy of ~ 90%.
 * Workflow is implemented using snakemake to make it simpler to run it afterward with your data and tweak it as you want.
 
 # 3) Terminology
 * haplotype-resolved assembly:
-* Structrual Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
+* Structural Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
 * Phased variant
 * Population Allele frequency
 * Snakemake
@@ -29,7 +29,7 @@ We are going to learn how to study structral variants(SV) in cattle genomes usin
 # 4) Data Description 
 We chose sequencing datasets from  the haplotype-resolved assembly project(PRJEB42335) of Nellore and Brown_Swiss cross for two reasons: 
 1. We can create a gold standard benchmark by calling the variants from the haplotype-resolved assemblies which is considered to be the accurate method Figure 1.
-2. The sample was heavily sequenced using illumina, pacbio(HIFI), and oxford nanpore which allows us to compare the results of different methods.  
+2. The sample was heavily sequenced using Illumina, Pacbio(HIFI), and oxford Nanopore which allows us to compare the results of different methods.  
 
 |<img src="sv_callers.jpg" alt="sv" width="500"/>|
 |:--:|
@@ -42,7 +42,7 @@ Test Input data for the workshop can be downloaded from the following link and t
 /home/mshokrof/workshop_12Jan_2023_data/
 ```
 
-The follwoing table describes the downloaded files 
+The following table describes the downloaded files 
 | file        |  Description  |
 |:-------------:|:-------------|
 | ARS-UCD1.2_Btau5.0.1Y.25.fa | Chromosome 25 from ARS-UCD1.2 genome|
@@ -56,20 +56,20 @@ The follwoing table describes the downloaded files
 | cattle_taurus_10/graph.desc.tsv |  file contains the Biosample ids|
 | cattle_indicus_10 |  Folder contains Kmer indexes of 10  indicuis samples|
 | cattle_indicus_10/graph.desc.tsv |  file contains the Biosample ids|
-| cattle_bostgroup_10 |  Folder contains Kmer indexes of 10  boison samples|
+| cattle_bostgroup_10 |  Folder contains Kmer indexes of 10  bison samples|
 | cattle_bosgroup_10/graph.desc.tsv |  file contains the Biosample ids|
 | vep/ | vep annotation data|
 
-we  created a downsampled the data for the sake of the workshope. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples).
+we  created a downsampled the data for the sake of the workshop. We are going to focus on chromsome 25 only, and we are going to calculate the AF in 30 samples(scalable to 4000 samples).
 
 # 5) Workflow:
 
 All the tutorial commands are written as Snakemake recipes. The workflow(summarized in Figure 2) has the following steps: 
-  1. map using minmap2/pbmm2
+  1. map using minimap2/pbmm2
   2. call small variants using clair3 and phase them using longshot
   3. split the reads into two haplotypes
   4. call SV using pbsv, sniffles, cuteSV
-  5. merge the small and structrual variants
+  5. merge the small and structural variants
   6. calculate AF using the great genotyper
   7. annotate the vcf using Variant effect predictor
 
@@ -117,7 +117,7 @@ We should fill sample_table.csv with the metadata about our datasets. It is in c
     | gff      | genes annotation of the reference  |
     | rmsk     | repeat annotation of the reference |
     | gold     | gold standard for Variant calling  |
-    | ont      | Oxford nanpore sample |
+    | ont      | Oxford Nanopore sample |
     | hifi     | Pacbio Hifi sample|
     | clr      | Pacbio CLR sample|
 3. bioSample: the biosample id of each dataset. 
@@ -187,7 +187,7 @@ you should expect a dry snakemake run where all the commands will be printed. At
 * Note: Snakemake will determine all the precedent steps in the workflow and execute them.  If you can't follow up the workshop pace, just run the current command and snakemake will catch up. 
 
   
-# 7 Analysis of Oxford nanopore reads (ERR7091271) 
+# 7 Analysis of Oxford Nanopore reads (ERR7091271) 
 ## 7.1 Let's map the reads using minimap2
   
 First, Let's look at how the workflow is going to map the ONT reads
@@ -319,7 +319,7 @@ First get the full path of the report
 readlink -f results/variants/annotated/cattle_taurus_10.ERR7091271.ont.minimap2/merged.stats.html
 ```
 
-Open a new terminal and download the reprot from the server
+Open a new terminal and download the report from the server
 ```
 scp <your_username>@farm:<path> ./
 ```
@@ -334,7 +334,7 @@ open the report with web explorer(chrome, firefox, or edge).
 Here we are going to run a very similar workflow with a few adjustments:
 1. pbmm2 is used instead of minimap2
 2. clair3 is instructed to use another model for hifi reads
-3. cuteSV is using different paramters
+3. cuteSV is using different parameters
 4. pbsv is added to the list of the SV callers
 
 ![hifi](hifi_dag.png)
