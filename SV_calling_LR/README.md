@@ -298,49 +298,24 @@ cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result
   
 ##  7.3 call SVs
 
+lets run cuteSV and sniffles for SV detection and benchmark the results.
+```
+snakemake -j 8 results/benchmarks/ERR7091271.txt
+cat results/benchmarks/ERR7091271.txt
+```
+
 Our workflow supports SV calling using sniffles, and cuteSV. We are
 going to try all of them and compare their performance. Only sniffles
 can produce phased SV when running on haplotagged long reads. I
 developed a hack for the other tools by splitting the bam files and
 calling SVs on each haplotype independently. After that, phased SVs
 are joined.
-
 ![sv dag](sv_dag.png)
 
-Let's first check the normal running of cuteSV and sniffles
-```
-snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.unphased.vcf.gz
-```
 
-```
-snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.unphased.vcf.gz
-```
 
-Let's run sniffles with the phasing option:
 
-```
-snakemake -p -j 8 results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz
-```
-  
-Let's run the workflow for phased cuteSV:
-  
-```
-snakemake -p -j 8 results/cuteSV/ERR7091271.ont.minimap2.phased.vcf.gz
-```
 
-Let's check the number of detected variants:
-  
-```
-  gzip -dc  results/sniffles/ERR7091271.ont.minimap2.phased.vcf.gz |grep -vP "^#" |wc -l 
-```
-
-Which tool produced the most variants?
-
-We can benchmark the result variants against the gold standard using the following command  
-```
-snakemake -p -j 1  results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
-cat results/benchmarks/cuteSV.ERR7091271.ont.minimap2.phased/summary.txt
-```
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
