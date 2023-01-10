@@ -75,25 +75,9 @@ We created a downsampled the data for the sake of this workshop. We
 are going to focus on chromsome 25 only, and we are going to calculate
 the AF in 30 samples (but we can scale to 4000 samples).
 
-# 5) Workflow:
+# 5) Let's start configurations
 
-All the tutorial commands are written as Snakemake recipes. The
-workflow (summarized in Figure 2) has the following steps:
-
-  1. map using minimap2/pbmm2
-  2. call small variants using clair3 and phase them using longshot
-  3. split the reads into two haplotypes
-  4. call SV using pbsv, sniffles, cuteSV
-  5. merge the small and structural variants
-  6. calculate AF using the great genotyper
-  7. annotate the vcf using Variant effect predictor
-
-![worflow_dag](dag.png)
-
-
-# 6) Let's start configurations
-
-## 6.1 Installing the environment
+## 5.1 Installing the environment
 
 0. run a bash session on farm(UC Davis HPC)
 This step creates a bash session and allocates 8 cores and 30GB RAM for it. 
@@ -134,7 +118,7 @@ The workflow expects the input files to be stored in
 `samples_table.csv` and `subsample_table.csv`, and the configurations
 in `config.yaml`.
 
-## 6.2 Edit config.yaml
+## 5.2 Edit config.yaml
 1. open config.yaml using emacs/vim
 ```
 emacs config.yaml
@@ -144,7 +128,7 @@ emacs config.yaml
 
 3. close by pressing ctrl+x then ctrl+c
 
-## 6.3 Edit sample_table.csv
+## 5.3 Edit sample_table.csv
 
 We should fill `sample_table.csv` with the metadata about our
 datasets. It is in csv format where each row represents a dataset. For
@@ -185,7 +169,7 @@ incorrectly specifying ERR5043144 as hifi will change the mapping tool
 to pbmm2 and will call SVs with cuteSV.
 
 
-## 6.4 Edit subsample_table.csv
+## 5.4 Edit subsample_table.csv
 
 we are going to specify the files for each dataset. 
 open subsample_table.csv using emacs and  copy paste the following lines under the header line
@@ -203,7 +187,7 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 ```
 
-## 6.5 Make sure that configuration is correct
+## 5.5 Make sure that configuration is correct
 
 Run the following command
 ```
@@ -218,7 +202,7 @@ At this step you can run the entire workflow with one command
 "snakemake -j 8". However, we are going to run each step individually
 while explaining the workflow!
 
-## 6.6 Workflow basics
+## 5.6 Workflow basics
 
 * The commands to run the workflow consists of two parts: running mode, and output files path.
 * running mode can be either 
@@ -233,14 +217,13 @@ For example,
 # print commands to map ERR5043144  using pbmm2
 snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam 
   
-# print commands to map ERR5043144  using pbmm2 and add haplotag(H0,H1) to the reads
-snakemake -np results/mapping/ERR5043144.hifi.pbmm2.phased.bam 
-  
-# print commands to map ERR7091271 sample using minimap2
-nakemake -np results/mapping/ERR7091271.ont.minimap2.bam 
-  
 # print commands to map ERR7091271 sample using minimap2
 snakemake results/mapping/ERR7091271.ont.minimap2.bam -np
+```
+
+Let's start by mapping Nanopore reads in ERR7091271 using minimap2 and calculate statistics
+```
+snakemake -j8 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ```
   
 Note: Snakemake will automatically determine all the required
@@ -248,24 +231,36 @@ preceding steps in the workflow and execute them.  If you can't
 follow at the workshop pace, just run the current command and
 snakemake will catch up.
 
+
+# 6) Workflow:
+
+All the tutorial commands are written as Snakemake recipes. The
+workflow (summarized in Figure 2) has the following steps:
+
+  1. map using minimap2/pbmm2
+  2. call small variants using clair3 and phase them using longshot
+  3. split the reads into two haplotypes
+  4. call SV using pbsv, sniffles, cuteSV
+  5. merge the small and structural variants
+  6. calculate AF using the great genotyper
+  7. annotate the vcf using Variant effect predictor
+
+![worflow_dag](dag.png)
+
+
+
 # 7 Analysis of Oxford Nanopore reads (ERR7091271) 
 
 ## 7.1 Let's map the reads using minimap2
   
 First, let's look at how the workflow is going to map the ONT reads
 ```
-snakemake -np results/mapping/ERR7091271.ont.minimap2.bam
+snakemake -np results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ```
 
-As you can see, the workflow will start by creating an index for the
-reference genome and then using it to map the reads.  to actually run
-the command remove "-np" from the previous command and add '-j 8'
-instead. Snakemake will use 8 different CPUs to run the steps.
-  
 Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/).
 
 ```
-snakemake  -p -j 1 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 cat results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ``` 
 
