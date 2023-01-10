@@ -149,8 +149,6 @@ rule minimap2_ONT:
         outputFolder + "mapping/{sample}.{tech}.minimap2.log"
     params:
         biosample=lambda wildcards: bioSamples[f"{wildcards.sample}"]
-    resources:
-        mem_mb=50000,cores=32
     threads: 32
     shell:
         """
@@ -171,8 +169,6 @@ rule faidx_index:
     log:
         reference + ".faidxIndex.log"
     threads: 1
-    resources:
-        mem_mb=50000,cores=1
     shell:
         """
 		samtools faidx {input.ref}  &> {log}
@@ -190,8 +186,6 @@ rule pbmm2_index:
     log:
         reference + ".pbmm2Index.log"
     threads: 1
-    resources:
-        mem_mb=50000,cores=1
     shell:
         """
 		pbmm2 index {input.ref}  {output.index} &> {log}
@@ -213,8 +207,6 @@ rule pbmm2:
         outputFolder + "mapping/{sample}.{tech}.pbmm2.log"
     params:
         biosample=lambda wildcards: bioSamples[f"{wildcards.sample}"]
-    resources:
-        mem_mb=50000,cores=32
     threads: 32
     shell:
         """
@@ -258,8 +250,6 @@ rule clair3:
     log:
         outputFolder + "clair3/{sample}.{tech}.{mapping}.log"
     threads: 32
-    resources:
-        mem_mb=30000,cores=32
     shell:
         """
 		# mkdir -p {tempFolder}clair$$/
@@ -294,8 +284,6 @@ rule FilterSmallVariants:
     log:
         outputFolder + "clair3/{sample}.{tech}.{mapping}.filtered.log"
     threads: 16
-    resources:
-        mem_mb=30000,cores=16
     shell:
         """
 	    bcftools view -O z  -f PASS -i 'FMT/PS>=0' {input.vcf} > {output.vcf} 2> {log}
@@ -321,8 +309,6 @@ rule concatStrucralandSmallVariants:
     log:
         outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.concat.log"
     threads: 16
-    resources:
-        mem_mb=30000,cores=16
     shell:
         """
 	    bcftools concat -D  -a -O z -o {output.vcf} {input.SV_vcf} {input.small_vcf} 2> {log}
@@ -352,8 +338,6 @@ rule haplotag_longphase:
     conda:
         "envs.yaml"
     threads: 16
-    resources:
-        mem_mb=10000,cores=16
     shell:
         """
 		longphase haplotag -s {input.phasedVcf} -b {input.bam}   -t {threads} -o {params.bamPrefix}
@@ -379,8 +363,6 @@ rule splitHaplotypesBAM:
     conda:
         "envs.yaml"
     threads: 4
-    resources:
-        mem_mb=5000,cores=4
     shell:
         """
 		../tools/splitHaplotypes.sh {input.bam} {output.bam_1} {output.bam_2} 2> {log}
@@ -414,8 +396,6 @@ rule discoverSVSignature:
     log:
         outputFolder + "pbsv/{sample}.{tech}.{mapping}.{phase}.discovery.log"
     threads: 1
-    resources:
-        mem_mb=30000,cores=1
     shell:
         """
 		mkdir -p {outputFolder}pbsv/ 
@@ -445,8 +425,6 @@ rule svCall:
     log:
         outputFolder + "pbsv/{sample}.{tech}.{mapping}.{phase}.calling.log"
     threads: 32
-    resources:
-        mem_mb=100000,cores=32
     shell:
         """
 		mkdir -p {outputFolder}/pbsv/
@@ -465,10 +443,6 @@ rule cleanGT:
         sample=sampleNames
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=50000,
-        runtime_hrs=1,
-        time=lambda wildcards, attempt: 3 * 60 * attempt
     shell:
         """
 		grep  -P "^#" {input} > {output}
@@ -491,10 +465,6 @@ rule combine_haplotypes:
         sample=sampleNames
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=50000,
-        runtime_hrs=3,
-        time=lambda wildcards, attempt: 3 * 60 * attempt
     shell:
         """
         bcftools merge -m none --missing-to-ref {input.vcf_1} {input.vcf_2}| python3 ../tools/assign-variant-ids.py {wildcards.tool} > {output.haps}
@@ -528,8 +498,6 @@ rule cuteSV:
     log:
         outputFolder + "cuteSV/{sample}.{tech}.{mapping}.{phase}.log"
     threads: 32
-    resources:
-        mem_mb=100000,cores=32
     shell:
         """
 		mkdir -p {tempFolder}$$/
@@ -559,8 +527,6 @@ rule sniffles:
     log:
         outputFolder + "sniffles/{sample}.{tech}.{mapping}.{phase}.log"
     threads: 16
-    resources:
-        mem_mb=30000,cores=16
     shell:
         r"""
 		mkdir -p {outputFolder}/sniffles/
@@ -688,12 +654,6 @@ rule populationGenotyping:
     threads: 32
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=200000,
-        cores=32,
-        nodes=1,
-        time=60 * 48,
-        partition="med2",
     shell:
         """
 	rm -f {params.outPrefix}*vcf
@@ -716,8 +676,6 @@ rule compressAndIndex:
     conda:
         "envs.yaml"
     log: "{prefix}.compressAndIndex.log"
-    resources:
-        mem_mb=3000,cores=1
     shell:
         """
         bgzip -c  {input.vcf} > {input.vcf}.gz 2> {log}
@@ -734,8 +692,6 @@ rule indexBEDGFF:
     conda:
         "envs.yaml"
     log: "{prefix}.{format}.index.log"
-    resources:
-        mem_mb=3000,cores=1
     shell:
         """
  	    tabix -p {wildcards.format} {input.vcf} 2> {log}
@@ -757,8 +713,6 @@ rule SurvivorUnion:
     conda:
         "envs.yaml"
     log: outputFolder + "SURVIVOR/{sample}.log"
-    resources:
-        mem_mb=4000,cores=1
     shell:
         """
         echo {input.vcfs} |tr -s ' ' $'\n' > input.$$.lst
@@ -782,8 +736,6 @@ rule svAnalyzerUnioin:
     wildcard_constraints:
         sample=sampleNames,
     log: outputFolder + "svanalyzer/{sample}.log"
-    resources:
-        mem_mb=10000,cores=1
     shell:
         """
         mkdir -p {tempFolder}$$/
@@ -819,8 +771,6 @@ rule alfredQC:
         txt=outputFolder + "{file}.alfred.txt"
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=10000,cores=1
     log:
         outputFolder + "{file}.alfred.qc.log"
     threads: 1
@@ -837,8 +787,6 @@ rule samtoolsStat:
         outputFolder + "{file}.flagstat"
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=5000,cores=1
     log:
         outputFolder + "{file}.pbmm2.flagstat.log"
     threads: 1
@@ -865,8 +813,6 @@ rule samplot:
         names=plotNames
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=5000,cores=1
     log:
         outputFolder + "samplot/{SVTYPE}_{chrom}_{start}_{end}.log"
     threads: 1
@@ -891,8 +837,6 @@ rule benchmarkSV:
         tool=callingNames
     conda:
         "envs.yaml"
-    resources:
-        mem_mb=5000,cores=1
     log:
         outputFolder + "benchmarks/{tool}.{options}.log"
     threads: 1
@@ -917,8 +861,6 @@ rule benchmarkSmallVariants:
         tool="clair3"
     conda:
         "happy.yaml"
-    resources:
-        mem_mb=5000,cores=1
     log:
         outputFolder + "benchmarks_small/{tool}.{options}.log"
     threads: 1
