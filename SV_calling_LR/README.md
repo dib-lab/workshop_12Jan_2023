@@ -310,6 +310,8 @@ can produce phased SV when running on haplotagged long reads. I
 developed a hack for the other tools by splitting the bam files and
 calling SVs on each haplotype independently. After that, phased SVs
 are joined.
+
+
 ![sv dag](sv_dag.png)
 
 
