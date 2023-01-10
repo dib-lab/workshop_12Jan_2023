@@ -146,8 +146,6 @@ rule minimap2_ONT:
     wildcard_constraints:
         tech="hifi|ont|clr",
         sample=sampleNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "mapping/{sample}.{tech}.minimap2.log"
     params:
@@ -167,8 +165,6 @@ rule faidx_index:
         ref=reference
     output:
         index=reference + ".fai"
-    conda:
-        "envs.yaml"
     log:
         reference + ".faidxIndex.log"
     threads: 1
@@ -184,8 +180,6 @@ rule pbmm2_index:
         ref=reference
     output:
         index=reference + ".mmi"
-    conda:
-        "envs.yaml"
     log:
         reference + ".pbmm2Index.log"
     threads: 1
@@ -204,8 +198,6 @@ rule pbmm2:
         bai=outputFolder + "mapping/{sample}.{tech}.pbmm2.bam.bai"
     wildcard_constraints:
         tech="hifi|ont|clr"
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "mapping/{sample}.{tech}.pbmm2.log"
     params:
@@ -248,8 +240,6 @@ rule clair3:
         sample=sampleNames
     params:
         model= lambda wildcards:  clair3Models[f"{wildcards.tech}"]
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "clair3/{sample}.{tech}.{mapping}.log"
     threads: 32
@@ -282,8 +272,6 @@ rule FilterSmallVariants:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "clair3/{sample}.{tech}.{mapping}.filtered.log"
     threads: 16
@@ -307,8 +295,6 @@ rule concatStrucralandSmallVariants:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "variants/{callingTool}.{sample}.{tech}.{mapping}.concat.log"
     threads: 16
@@ -338,8 +324,6 @@ rule haplotag_longphase:
         bamPrefix=outputFolder + "mapping/{sample}.{tech}.{tool}.phased"
     log:
         outputFolder + "mapping/longPhase.{sample}.{tool}.{tech}.log"
-    conda:
-        "envs.yaml"
     threads: 16
     shell:
         """
@@ -363,8 +347,6 @@ rule splitHaplotypesBAM:
         sample=sampleNames
     log:
         outputFolder + "mapping/{sample}.phased.{tool}.{tech}.log"
-    conda:
-        "envs.yaml"
     threads: 4
     shell:
         """
@@ -389,8 +371,6 @@ rule discoverSVSignature:
         outputFolder + "pbsv/{sample}.{tech}.{mapping}.{phase}.svsig.gz"
     params:
         sample= lambda wildcards: getPhasedSampleName(wildcards)
-    conda:
-        "envs.yaml"
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -423,8 +403,6 @@ rule svCall:
         mapping=mappingTools,
         sample=sampleNames,
         phase="h0|h1|unphased"
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "pbsv/{sample}.{tech}.{mapping}.{phase}.calling.log"
     threads: 32
@@ -444,8 +422,6 @@ rule cleanGT:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
-    conda:
-        "envs.yaml"
     shell:
         """
 		grep  -P "^#" {input} > {output}
@@ -466,8 +442,6 @@ rule combine_haplotypes:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
-    conda:
-        "envs.yaml"
     shell:
         """
         bcftools merge -m none --missing-to-ref {input.vcf_1} {input.vcf_2}| python3 ../tools/assign-variant-ids.py {wildcards.tool} > {output.haps}
@@ -491,8 +465,6 @@ rule cuteSV:
     params:
         params = lambda wildcards: cuteSVParams[f"{wildcards.tech}"],
         sample = lambda wildcards: getPhasedSampleName(wildcards)
-    conda:
-        "envs.yaml"
     wildcard_constraints:
         tech="hifi|ont|clr",
         mapping=mappingTools,
@@ -525,8 +497,6 @@ rule sniffles:
         tech="hifi|ont|clr",
         mapping=mappingTools,
         sample=sampleNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "sniffles/{sample}.{tech}.{mapping}.{phase}.log"
     threads: 16
@@ -621,8 +591,6 @@ rule remove_errors_variants:
         ref=reference
     output:
         outputFolder + "{prefix}.checked.vcf"
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "{prefix}.checked.log"
     threads: 1
@@ -650,13 +618,9 @@ rule populationGenotyping:
         mapping=mappingTools,
         sample=sampleNames,
         graph=graphs_constraint
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "variants/GG/{graph}.{callingTool}.{sample}.{tech}.{mapping}/log"
     threads: 32
-    conda:
-        "envs.yaml"
     shell:
         """
 	rm -f {params.outPrefix}*vcf
@@ -676,8 +640,6 @@ rule compressAndIndex:
         vcf="{prefix}.vcf",
     output:
         vcf="{prefix}.vcf.gz",index="{prefix}.vcf.gz.tbi"
-    conda:
-        "envs.yaml"
     log: "{prefix}.compressAndIndex.log"
     shell:
         """
@@ -692,8 +654,6 @@ rule indexBEDGFF:
         index="{prefix}.{format}.gz.tbi"
     wildcard_constraints:
         format="bed|gff"
-    conda:
-        "envs.yaml"
     log: "{prefix}.{format}.index.log"
     shell:
         """
@@ -713,8 +673,6 @@ rule SurvivorUnion:
     params: names=lambda wildcards: mergeVCFs[f"{wildcards.sample}"]["names"]
     wildcard_constraints:
         sample=sampleNames,
-    conda:
-        "envs.yaml"
     log: outputFolder + "SURVIVOR/{sample}.log"
     shell:
         """
@@ -734,8 +692,6 @@ rule svAnalyzerUnioin:
         vcf=outputFolder + "svanalyzer/{sample}.vcf",
         distances=outputFolder + "svanalyzer/{sample}.distances"
     params: names=lambda wildcards: mergeVCFs[f"{wildcards.sample}"]["names"]
-    conda:
-        "envs.yaml"
     wildcard_constraints:
         sample=sampleNames,
     log: outputFolder + "svanalyzer/{sample}.log"
@@ -772,8 +728,6 @@ rule alfredQC:
     output:
         tsv=outputFolder + "{file}.alfred.qc.tsv.gz",
         txt=outputFolder + "{file}.alfred.txt"
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "{file}.alfred.qc.log"
     threads: 1
@@ -788,8 +742,6 @@ rule samtoolsStat:
         outputFolder + "{file}.bam"
     output:
         outputFolder + "{file}.flagstat"
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "{file}.pbmm2.flagstat.log"
     threads: 1
@@ -814,8 +766,6 @@ rule samplot:
     params:
         window= lambda wildcards: int(abs(int(f"{wildcards.end}")-int(f"{wildcards.start}"))/2),
         names=plotNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "samplot/{SVTYPE}_{chrom}_{start}_{end}.log"
     threads: 1
@@ -838,8 +788,6 @@ rule benchmarkSV:
         outFolder = outputFolder+ "benchmarks/{tool}.{options}/"
     wildcard_constraints:
         tool=callingNames
-    conda:
-        "envs.yaml"
     log:
         outputFolder + "benchmarks/{tool}.{options}.log"
     threads: 1
