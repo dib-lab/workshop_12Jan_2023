@@ -321,12 +321,7 @@ are joined.
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
-Benchmark the results of the phased and unphased variants for both
-tools and run the following command to view the results:
 
-```
-grep -P "precision|recall" results/benchmarks/*ERR7091271*/summary.txt
-```
 
 ##  7.4 Calculate Population Allele Frequency
 
