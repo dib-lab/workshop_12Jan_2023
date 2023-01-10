@@ -119,14 +119,14 @@ The workflow expects the input files to be stored in
 in `config.yaml`.
 
 ## 5.2 Edit config.yaml
-1. open config.yaml using emacs/vim
+1. open config.yaml using nano
 ```
-emacs config.yaml
+nano config.yaml
 ```
 
 2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
 
-3. close by pressing ctrl+x then ctrl+c
+3. close by pressing ctrl+x then Y then enter
 
 ## 5.3 Edit sample_table.csv
 
