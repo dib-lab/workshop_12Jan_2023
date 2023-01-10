@@ -847,6 +847,53 @@ rule benchmarkSV:
         """
 
 
+rule gather_benchmark_ont:
+    input:
+        stats=expand(outputFolder + "benchmarks/{tool}.{sample}.ont.minimap2.{phase}/summary.txt",
+	tool=["cuteSV","sniffles"],
+	sample= "{sample}",
+	phase=["phased", "unphased"]
+	)
+    output:
+        outputFolder+ "benchmarks/{sample}.txt"
+    wildcard_constraints:
+        sample=sampleNames
+    log:
+        outputFolder + "benchmarks/{sample}.log"
+    threads: 1
+    shell:
+        """
+	 ls {input.stats} |cut -f3 -d'/' |cut -f1 -d'.' > col1.$$
+	 ls {input.stats} |cut -f3 -d'/' |cut -f5 -d'.' > col2.$$
+	 grep "recall" {input.stats} | cut -f3 -d":" | tr -d ', ' > col3.$$
+	 grep "precision" {input.stats} | cut -f3 -d":" | tr -d ', ' > col4.$$
+	 echo -e  "sample\tphase\trecall\tprecision" > header.$$
+	 cat header.$$ <(paste col1.$$ col2.$$ col3.$$ col4.$$) |../tools/prettytable 4 >{output}
+	 rm header.$$ col1.$$ col2.$$ col3.$$ col4.$$
+        """
+
+rule gather_benchmark_hifi:
+    input:
+        stats=expand(outputFolder + "benchmarks/{tool}.{sample}.hifi.pbmm2.{phase}/summary.txt",
+	tool=["cuteSV","sniffles", "pbsv"],
+	sample= "{sample}",
+	phase=["phased", "unphased"]
+	)
+    output:
+        outputFolder+ "benchmarks/{sample}.txt"
+    wildcard_constraints:
+        sample=sampleNames
+    log:
+        outputFolder + "benchmarks/{sample}.log"
+    threads: 1
+    shell:
+        """
+	 grep -P "precision|recall" {input.stats} > {output} 2> {log}
+        """
+
+
+
+
 rule benchmarkSmallVariants:
     input:
         vcf=outputFolder+ "{tool}/{options}.vcf.gz",
