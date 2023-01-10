@@ -24,8 +24,8 @@ variants to facilitate studying the functional impact of the SVs.
 
 # 3) Terminology
 
-* haplotype-resolved assembly
-* Structural Variant: genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation. 
+* Structural Variant: Genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation.
+* haplotype-resolved assembly: Haplotype-resolved assembly is a method of generating a high-quality genome assembly that distinguishes between the two copies of each chromosome that an individual inherited, one from each parent. In other words, it allows researchers to separate and distinguish the unique DNA sequences inherited from an individual's mother and father. 
 * Phased variant
 * Population Allele frequency
 * Snakemake
@@ -66,14 +66,9 @@ The following table describes the test input file:
 | ARS-UCD1.2_Btau5.0.1Y.25.gff.gz | genes annotation of chromosome 25|
 | goldstandard/callset_filered.25.vcf.gz | gold standard for variant calling created using the haployte resolved assemblies|
 | goldstandard/callset_filered.25.bed.gz | the gold standard in bed format for plotting|
-| ERR5043144.chr25 | Hifi reads from sample SAMEA10017982 that maps to chromsome 25|
-| ERR7091271.25.fastq.gz | ONT reads from sample SAMEA10017982 that maps to chromsome 25|
+| ERR5043144.chr25.fastq.gz | Hifi reads from sample SAMEA10017982 that maps to chromsome 25|
+| ERR7091271.chr25.fastq.gz | ONT reads from sample SAMEA10017982 that maps to chromsome 25|
 | cattle_taurus_10 |  Folder contains Kmer indexes of 10  taurus samples|
-| cattle_taurus_10/graph.desc.tsv |  file contains the Biosample ids|
-| cattle_indicus_10 |  Folder contains Kmer indexes of 10  indicuis samples|
-| cattle_indicus_10/graph.desc.tsv |  file contains the Biosample ids|
-| cattle_bostgroup_10 |  Folder contains Kmer indexes of 10  bison samples|
-| cattle_bosgroup_10/graph.desc.tsv |  file contains the Biosample ids|
 | vep/ | vep annotation data|
 
 We created a downsampled the data for the sake of this workshop. We
@@ -100,6 +95,12 @@ workflow (summarized in Figure 2) has the following steps:
 
 ## 6.1 Installing the environment
 
+0. run a bash session on farm(UC Davis HPC)
+This step creates a bash session and allocates 8 cores and 30GB RAM for it. 
+
+```
+ srun    -p high2 -t 10:00:00 -c 8  --mem=30G --pty bash
+```
 1. clone this repo:
 
 ```
@@ -108,6 +109,7 @@ cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
 
 2. create the conda environment and install the tools
+We preinstalled the envorioments for you to save the workshop time. You **don't have** to install it again and rerun the following commands.
 
 ```
 conda install mamba -n base -c conda-forge
@@ -115,10 +117,17 @@ mamba env create -f envs.yaml
 conda activate cattle_sv
 ```
 
+All you need is to activate the conda environment
+
+```
+conda activate cattle_sv
+```
+
+
 3. make sure that you can access the input files
 
 ```
-ls /home/mshokrof/workshop_12Jan_2023_data/
+ls -lsah  /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ```
 
 The workflow expects the input files to be stored in
@@ -221,7 +230,6 @@ while explaining the workflow!
 
 For example,
 ```
-<<<<<<< Updated upstream
 # print commands to map ERR5043144  using pbmm2
 snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam 
   
