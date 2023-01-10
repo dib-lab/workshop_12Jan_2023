@@ -94,7 +94,10 @@ def getBAM(wildcards, calling_tool):
     if tool == "minimap2" and wildcards.tech in ["hifi", "clr"]:
         tool = "pbmm2"
     if calling_tool == "sniffles":
-        return "%smapping/%s.%s.%s.phased.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
+        if wildcards.phase == "unphased":
+            return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
+        return "%smapping/%s.%s.%s.phased.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.phase)        
+        return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool == "clair3":
         return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool in ["pbsv", "cuteSV"]:
@@ -888,7 +891,14 @@ rule gather_benchmark_hifi:
     threads: 1
     shell:
         """
-	 grep -P "precision|recall" {input.stats} > {output} 2> {log}
+	 grep "recall" {input.stats} > tmp.$$
+	 cat tmp.$$ |cut -f3 -d'/' |cut -f1 -d'.' > col1.$$
+	 cat tmp.$$ |cut -f3 -d'/' |cut -f5 -d'.' > col2.$$
+	 grep "recall" {input.stats} | cut -f3 -d":" | tr -d ', ' > col3.$$
+	 grep "precision" {input.stats} | cut -f3 -d":" | tr -d ', ' > col4.$$
+	 echo -e  "sample\tphase\trecall\tprecision" > header.$$
+	 cat header.$$ <(paste col1.$$ col2.$$ col3.$$ col4.$$) |../tools/prettytable 4 >{output}
+	 rm header.$$ col1.$$ col2.$$ col3.$$ col4.$$ tmp.$$
         """
 
 
