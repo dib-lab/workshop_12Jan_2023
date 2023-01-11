@@ -342,22 +342,6 @@ or check the highly frequent variants:
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
 
-## 7.5 annotate using VEP
-
-The last step in the workflow is to use VEP to annotate the discovered
-variants with their effect on gene function.
-
-```
-snakemake  --use-conda -p -j 4  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
-```
-
-Let's view variants predicted to have a high impact on gene function:
-
-```
-bcftools view  results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz |grep -vP "^#" |grep "HIGH" |less
-```
-
-Q: how many variants have a high impact on the gene function?
 
 
 
