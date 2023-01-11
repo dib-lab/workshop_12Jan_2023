@@ -77,14 +77,19 @@ the AF in 30 samples (but we can scale to 4000 samples).
 
 # 5) Let's start configurations
 
-## 5.1 Installing the environment
+Log into 'farm.cse.ucdavis.edu' using the username and password you
+were sent in an e-mail.
 
-0. run a bash session on farm(UC Davis HPC)
+Then, run a bash session on a compute node like so:
+
+```
+srun  -p high2 -t 10:00:00 -c 8  --mem=30G --pty bash
+```
+
 This step creates a bash session and allocates 8 cores and 30GB RAM for it. 
 
-```
- srun    -p high2 -t 10:00:00 -c 8  --mem=30G --pty bash
-```
+## 5.1 Installing the environment
+
 1. clone this repo:
 
 ```
@@ -93,7 +98,12 @@ cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
 
 2. create the conda environment and install the tools
-We preinstalled the envorioments for you to save the workshop time. You **don't have** to install it again and rerun the following commands.
+
+@CTB fixme
+
+We preinstalled the environments for you to save the workshop
+time. You **don't have** to install it again and rerun the following
+commands.
 
 ```
 conda install mamba -n base -c conda-forge
@@ -108,27 +118,28 @@ conda activate cattle_sv
 ```
 
 
-3. make sure that you can access the input files
+3. Make sure that you can access the input files
 
 ```
-ls -lsah  /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+ls -lh /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ```
 
-The workflow expects the input files to be stored in
-`samples_table.csv` and `subsample_table.csv`, and the configurations
-in `config.yaml`.
+you should see a 
 
 ## 5.2 Edit config.yaml
-1. open config.yaml using nano
+
+The workflow expects the list of input samples to be stored in
+`samples_table.csv` and `subsample_table.csv`; the overall configuration
+is in `config.yaml`.
+
+You can examine `config.yaml` by typing:
 ```
-nano config.yaml
+cat config.yaml
 ```
 
-2. change the outputFolder and tempFolder to desired folders. We can just leave the default options
+We don't need to change anything for this workshop.
 
-3. close by pressing ctrl+x then Y then enter
-
-## 5.3 Edit sample_table.csv
+## 5.3 Configure samples with `sample_table.csv`
 
 We should fill `sample_table.csv` with the metadata about our
 datasets. It is in csv format where each row represents a dataset. For
@@ -149,52 +160,67 @@ each dataset, we add three comma separated columns:
 
 3. bioSample: the biosample id of each dataset. 
 
-We are going to define 8 datasets: reference genome, repeat
-annotation, gene annotation, gold standard vcf format, gold standard
-bed format, ont sample, hifi sample, and a cohort graph.
+For this workshop, we're going to use 8 datasets: reference genome,
+repeat annotation, gene annotation, gold standard vcf format, gold
+standard bed format, ont sample, hifi sample, and a cohort graph.
 
-Open sample_table.csv and paste the following lines under the header:
+We've preconfigured them for you in `sample_table.csv.example` and
+`subsample_table.csv.example`, and you
+can copy them into place like so:
 ```
-ucd1.2,ref,SAMN03145444
-ucd1.2_gff,gff,SAMN03145444
-ucd1.2_rmsk,rmsk,SAMN03145444
-NxB,gold,SAMEA7765441
-ERR5043144,hifi,SAMEA7765441
-ERR7091271,ont,SAMEA7765441
-cattle_taurus_10,graph,COHORT
+cp sample_table.csv.example sample_table.csv
+cp subsample_table.csv.example subsample_table.csv
 ```
+
+Next, run
+```
+cat sample_table.csv
+```
+to look at the contents; you should see:
+
+>sample_name,sample_type,BioSample
+>ucd1.2,ref,SAMN03145444
+>ucd1.2_gff,gff,SAMN03145444
+>ucd1.2_rmsk,rmsk,SAMN03145444
+>NxB,gold,SAMEA7765441
+>ERR5043144,hifi,SAMEA7765441
+>ERR7091271,ont,SAMEA7765441
+>cattle_taurus_10,graph,COHORT
 
 The sample_type selects the workflow to execute - for example,
 incorrectly specifying ERR5043144 as hifi will change the mapping tool
 to pbmm2 and will call SVs with cuteSV.
 
 
-## 5.4 Edit subsample_table.csv
+## 5.4 Configure subsamples with ` subsample_table.csv`
 
-we are going to specify the files for each dataset. 
-open subsample_table.csv using emacs and  copy paste the following lines under the header line
+Next, let's look at `subsample_table.csv`:
+```
+cat subsample_table.csv
+```
 
-```
-ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
-ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
-ucd1.2_gff,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
-NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.bed.gz
-NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.vcf.gz
-ERR5043144,/home/mshokrof/workshop_12Jan_2023_data/ERR5043144.chr25.fastq.gz
-ERR7091271,/home/mshokrof/workshop_12Jan_2023_data/ERR7091271.chr25.fastq.gz
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
-```
+You should see:
+
+>sample_name,sample_type,BioSample
+>ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+>ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
+>ucd1.2_gff,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
+>NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.bed.gz
+>NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.vcf.gz
+>ERR5043144,/home/mshokrof/workshop_12Jan_2023_data/ERR5043144.chr25.fastq.gz
+>ERR7091271,/home/mshokrof/workshop_12Jan_2023_data/ERR7091271.chr25.fastq.gz
+>cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
+>cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
+>cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 
 ## 5.5 Make sure that configuration is correct
 
 Run the following command
 ```
-snakemake -np   results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
+snakemake -np results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
 
-This will print out all of the commands that snakemake will run,
+This will print out all of the commands that snakemake would run,
 without actually running them. If there are any configuration problems,
 you will find out here!
 
@@ -204,11 +230,12 @@ while explaining the workflow!
 
 ## 5.6 Workflow basics
 
-* The commands to run the workflow consists of two parts: running mode, and output files path.
+* The commands to run the workflow consists of two parts: the "running mode", and an output files path.
 * running mode can be either 
     * "-np" instructs snakemake to print the commands and parameters without running anything  
     * "-j 8" instructs snakemake to run the script using 8 threads
-* outpath files path follows the following pattern:
+* output files files path follows the following pattern:
+
 <img src="snakemake_path.png" alt="sv" width="700"/>
 
 
@@ -221,7 +248,7 @@ snakemake -np results/mapping/ERR5043144.hifi.pbmm2.bam
 snakemake results/mapping/ERR7091271.ont.minimap2.bam -np
 ```
 
-Let's start by mapping Nanopore reads in ERR7091271 using minimap2 and calculate statistics
+Let's start by mapping Nanopore reads in ERR7091271 using minimap2 and calculate statistics:
 ```
 snakemake -j8 results/mapping/ERR7091271.ont.minimap2.alfred.txt
 ```
