@@ -17,7 +17,7 @@ variants to facilitate studying the functional impact of the SVs.
 
 # 2) Significance 
 
-* Novel way of calculating Population AF without needing databases like genomAD, and more accurate too.
+* Novel way of calculating Population AF without needing databases like genomAD.
 * Variants will be richly annotated with AF and predicted functional impact making it perfect for studying functional impact of the SVs.
 * Workflow is benchmarked on cattle data and achieving accuracy of ~ 90%.
 * Workflow is implemented using snakemake to make it simpler to run it afterward with your data and tweak it as you want.
@@ -124,7 +124,6 @@ conda activate cattle_sv
 ls -lh /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ```
 
-you should see a 
 
 ## 5.2 Edit config.yaml
 
