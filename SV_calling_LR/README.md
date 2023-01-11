@@ -402,6 +402,18 @@ call SV using all the tools and run the benchmarking tool
 snakemake -j 8 results/benchmarks/ERR5043144.txt && cat results/benchmarks/ERR5043144.txt
 ```
 
+```
+┌──────────┬──────────┬────────────────────┬────────────────────┐
+│sample    │phase     │recall              │precision           │
+├──────────┼──────────┼────────────────────┼────────────────────┤
+│cuteSV    │phased    │0.8559218559218559  │0.9127604166666666  │
+│cuteSV    │unphased  │0.7814407814407814  │0.9103840682788051  │
+│sniffles  │phased    │0.8376068376068376  │0.9183400267737617  │
+│sniffles  │unphased  │0.8376068376068376  │0.9183400267737617  │
+│pbsv      │phased    │0.7912087912087912  │0.9391304347826087  │
+│pbsv      │unphased  │0.7313797313797313  │0.821673525377229   │
+└──────────┴──────────┴────────────────────┴────────────────────┘
+```
 
 Let's complete the workflow to the end
 
