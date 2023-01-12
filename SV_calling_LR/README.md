@@ -416,6 +416,7 @@ or check the high-frequency variants:
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
 @mostafa what do we say here? what conclusions?
+Mostafa: I was just viewing how toget the freeunt variants we can say we that we can use them to make pangenomes or detecting missasemblies or rare variants in the reference sample that shouldnt be inculded
 
 ## 8 Analysis of Pacbio hifi reads (ERR5043144) 
 
