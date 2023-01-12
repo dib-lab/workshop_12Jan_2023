@@ -1,7 +1,8 @@
 name: cattle_sv
 channels:
- - bioconda
  - conda-forge
+ - bioconda
+ - defaults
 dependencies:
  - python=3.9.0
  - snakemake=7.19.1
