@@ -154,6 +154,7 @@ conda activate cattle_sv
 ls -lh /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ```
 
+:::info
 **Note:** If you are disconnected and log back in, you will need to run
 the following three commands:
 
@@ -163,7 +164,7 @@ cd workshop_12Jan_2023/SV_calling_LR/
 conda activate cattle_sv
 ```
 in order to pick up where you left off!
-
+:::
 ### 5.2 View config.yaml
 
 The workflow expects the list of input samples to be stored in
@@ -363,7 +364,7 @@ cut -f1,11,12 -d, \
     results/benchmarks_small/clair3.ERR7091271.ont.minimap2/result.summary.csv
 ```
 
-@mostafa, how do we interpret these results? I get 
+You should see:
 ```
 Type,METRIC.Recall,METRIC.Precision
 INDEL,0.9270700000000001,0.959442
@@ -414,8 +415,7 @@ or check the high-frequency variants:
 ```
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
-@mostafa what do we say here? what conclusions?
-Mostafa: I was just viewing how toget the freeunt variants we can say we that we can use them to make pangenomes or detecting missasemblies or rare variants in the reference sample that shouldnt be inculded
+You could use these high-frequency variants for, e.g. making pangenomes or detecting missasemblies or rare variants in the reference sample that shouldnt be included.
 
 ## 8 Analysis of Pacbio hifi reads (ERR5043144) 
 
@@ -435,9 +435,6 @@ cat results/mapping/ERR5043144.hifi.pbmm2.alfred.txt
 ``` 
 
 Now, call small variants and run the benchmarking tool:
-
-@mostafa this doesn't work... and should this minimap2 or pbmm2, as it says above?
-I fixed and you were correct
 
 ```
 snakemake -p -j 8 results/benchmarks_small/clair3.ERR5043144.hifi.pbmm2/result.summary.csv  --use-conda
@@ -472,9 +469,10 @@ snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cute
 
 ## 9 Notebook visualization hands-on [WORK-IN-PROGRESS]
 
-Run an Jupyter-lab in the browser
+On your farm account, execute the following command:
 
-```
-bash ~/workshop_12Jan_2023/run-notebook.sh
+```bash
+bash ../run-notebook.sh
 ```
 
+This will print an `ssh` command you should execute on your local machine terminal. Wait for a few seconds, and copy-paste the printed URL in your browser.
