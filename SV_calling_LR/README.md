@@ -25,13 +25,16 @@ variants to facilitate studying the functional impact of the SVs.
 # 3) Terminology
 
 * Structural Variant: Genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation.
-* haplotype-resolved assembly: Haplotype-resolved assembly is a method of generating a high-quality genome assembly that distinguishes between the two copies of each chromosome that an individual inherited, one from each parent. In other words, it allows researchers to separate and distinguish the unique DNA sequences inherited from an individual's mother and father. 
-* Genotyped Variants:
-* Phased Variant:
+* Haplotype-resolved assembly: Haplotype-resolved assembly is a method of generating a high-quality genome assembly that distinguishes between the two copies of each chromosome that an individual inherited, one from each parent. In other words, it allows researchers to separate and distinguish the unique DNA sequences inherited from an individual's mother and father. 
+* Genotyped Variants: variants with know genotypes: homozygous or heterozygous
+* Phased Variant: variants tagged by their haplotypes. Check the next figure.
 * Snakemake: The Snakemake workflow management system is a tool to create reproducible and scalable data analyses.
 * Variant calling: searching for the variation between sequencing sample and a genome reference
-* genotyping: Checking whether a variation exists in a sequencing sample
+* Genotyping: Checking whether a variation exists in a sequencing sample and compute its genotype
 * Population genotyping : Checking whether a variation exists in a population of sequencing samples
+
+
+<img src="phasing explaination.png" alt="sv" width="200"/>
 
 
 # 4) Data Description 
@@ -41,7 +44,7 @@ project (PRJEB42335) of Nellore and Brown_Swiss cross for two reasons:
 
 1. We can create a gold standard benchmark by calling the variants
    from the haplotype-resolved assemblies which is considered to be
-   the most accurate method (Figure 1).
+   the most accurate method (Figure 2). We used  PanGenie recommended [workflow](https://bitbucket.org/jana_ebler/vcf-merging) to call the SV from haplotype resolved assemblies using minimap2 and paf tools.
 
 2. The sample was heavily sequenced using Illumina, Pacbio(HIFI), and Oxford
    Nanopore which allows us to compare the results of different methods.  
@@ -49,8 +52,7 @@ project (PRJEB42335) of Nellore and Brown_Swiss cross for two reasons:
 |<img src="sv_callers.jpg" alt="sv" width="500"/>|
 |:--:|
 |Figure 1: Comparison of different methods
-Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. 
-|
+Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. |
 
 Test input data for the workshop is available on farm at:
 ```
