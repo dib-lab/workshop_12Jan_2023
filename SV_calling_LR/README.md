@@ -387,7 +387,7 @@ developed a hack for the other tools by splitting the bam files and
 calling SVs on each haplotype independently. After that, phased SVs
 are joined.
 
-![sv_dag.png](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_dag.png?raw=true)
+![sv_dag](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_dag.png?raw=true)
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
@@ -415,6 +415,7 @@ or check the high-frequency variants:
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
 @mostafa what do we say here? what conclusions?
+Mostafa: I was just viewing how toget the freeunt variants we can say we that we can use them to make pangenomes or detecting missasemblies or rare variants in the reference sample that shouldnt be inculded
 
 ## 8 Analysis of Pacbio hifi reads (ERR5043144) 
 
@@ -436,6 +437,7 @@ cat results/mapping/ERR5043144.hifi.pbmm2.alfred.txt
 Now, call small variants and run the benchmarking tool:
 
 @mostafa this doesn't work... and should this minimap2 or pbmm2, as it says above?
+I fixed and you were correct
 
 ```
 snakemake -p -j 8 results/benchmarks_small/clair3.ERR5043144.hifi.pbmm2/result.summary.csv  --use-conda
