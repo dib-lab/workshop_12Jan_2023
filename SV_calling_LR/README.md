@@ -387,7 +387,7 @@ developed a hack for the other tools by splitting the bam files and
 calling SVs on each haplotype independently. After that, phased SVs
 are joined.
 
-![sv dag]([sv_dag.png](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_dag.png?raw=true))
+![sv_dag.png](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_dag.png?raw=true)
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
