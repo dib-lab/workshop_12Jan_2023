@@ -438,10 +438,11 @@ cat results/mapping/ERR5043144.hifi.pbmm2.alfred.txt
 Now, call small variants and run the benchmarking tool:
 
 @mostafa this doesn't work... and should this minimap2 or pbmm2, as it says above?
+I fixed and you were correct
 
 ```
-snakemake -p -j 8 results/benchmarks_small/clair3.ERR5043144.hifi.minimap2/result.summary.csv  --use-conda
-cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR5043144.hifi.minimap2/result.summary.csv
+snakemake -p -j 8 results/benchmarks_small/clair3.ERR5043144.hifi.pbmm2/result.summary.csv  --use-conda
+cut -f1,11,12 -d, results/benchmarks_small/clair3.ERR5043144.hifi.pbmm2/result.summary.csv
 ```
 
 Call SV using all the tools and run the benchmarking tool:
