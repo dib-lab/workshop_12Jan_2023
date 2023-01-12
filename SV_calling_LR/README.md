@@ -9,6 +9,14 @@ Contact: Moustafa Shokrof <meshokrof@ucdavis.edu>
 
 [toc]
 
+## Schedule
+
+- 1pm - setup and introductions
+- 1:15pm - presentation and overview
+- 2:30pm - snakemake workflow and SV calling hands-on
+- 3:30pm - break until 3:45!
+- 3:45pm - snakemake workflow & notebook visualization hands-on
+
 ## 1) Introduction
 
 We are going to learn how to study structural variants (SV) in cattle
@@ -16,7 +24,7 @@ genomes using long reads from Pacbio and Oxford Nanopore.  We are
 going to discover and phase small variants and SVs using state of the
 art tools. After that, we are going to calculate population allele
 frequencies using a novel population genotyper tool (The Great
-Genotyper).  Lastly, we are going to functionally annotate the
+Genotyper). Lastly, we are going to functionally annotate the
 variants to facilitate studying the functional impact of the SVs.
 
 ### Aims
@@ -224,7 +232,7 @@ to pbmm2 and will call SVs with cuteSV.
 N.B: NxB, ERR5043144, and ERR7091271 all have the same biosample ID!
 
 
-## 5.4 Configure subsamples with `subsample_table.csv`
+### 5.4 Configure subsamples with `subsample_table.csv`
 
 Next, let's look at `subsample_table.csv`:
 ```
@@ -247,7 +255,7 @@ cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/
 cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 ```
 
-## 5.5 Make sure that the configuration is valid
+### 5.5 Make sure that the configuration is valid
 
 Run the following command
 ```
@@ -262,7 +270,7 @@ At this step you can run the entire workflow with one command,
 `snakemake -j 8 --use-conda`. However, we are going to run each step individually
 while explaining the workflow!
 
-## 5.6 Workflow basics
+### 5.6 Workflow basics
 
 * The commands to run the workflow consists of two parts: the "running mode", and an output files path.
 * running mode can be either 
@@ -381,7 +389,7 @@ are joined.
 
 Q: Which tool produces the best performance? What is the effect of phasing? 
 
-##  7.4 Calculate Population Allele Frequency
+### 7.4 Calculate Population Allele Frequency
 
 Here we are going to calculate population allele frequency for the
 discovered structural and small variants by genotyping them in a
