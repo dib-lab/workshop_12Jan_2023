@@ -26,12 +26,12 @@ variants to facilitate studying the functional impact of the SVs.
 
 * Structural Variant: Genome variation of more than 50bp, it can be insertion, deletion, inversion, duplication, or translocation.
 * haplotype-resolved assembly: Haplotype-resolved assembly is a method of generating a high-quality genome assembly that distinguishes between the two copies of each chromosome that an individual inherited, one from each parent. In other words, it allows researchers to separate and distinguish the unique DNA sequences inherited from an individual's mother and father. 
-* Phased variant
-* Population Allele frequency
-* Snakemake
-* Variant calling
-* genotyping
-* Population genotyping 
+* Genotyped Variants:
+* Phased Variant:
+* Snakemake: The Snakemake workflow management system is a tool to create reproducible and scalable data analyses.
+* Variant calling: searching for the variation between sequencing sample and a genome reference
+* genotyping: Checking whether a variation exists in a sequencing sample
+* Population genotyping : Checking whether a variation exists in a population of sequencing samples
 
 
 # 4) Data Description 
