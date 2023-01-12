@@ -1,5 +1,8 @@
 # Cattle pangenome workshop: calling and phasing SVs, calculating population allele frequencies, and annotating variants.
 
+[![hackmd-github-sync-badge](https://hackmd.io/pSHf4JIJSJ2gKWMPRdr2_A/badge)](https://hackmd.io/pSHf4JIJSJ2gKWMPRdr2_A)
+
+
 Authors: Mostafa Shokrof, Mo Abuelanin, C. Titus Brown, and Tamer Mansour.
 
 Contact: Moustafa Shokrof <meshokrof@ucdavis.edu>
@@ -57,7 +60,7 @@ project (PRJEB42335) of Nellore and Brown_Swiss cross for two reasons:
 2. The sample was heavily sequenced using Illumina, Pacbio(HIFI), and Oxford
    Nanopore which allows us to compare the results of different methods.  
 
-|<img src="sv_callers.jpg" alt="sv" width="500"/>|
+|<img src="https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_callers.jpg?raw=true" alt="sv" width="500"/>|
 |:--:|
 |Figure 1: Comparison of different methods
 Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ. Structural variant calling: The long and the short of it. Genome Biology. 2019 Nov 20;20(1):246. |
