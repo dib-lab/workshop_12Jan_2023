@@ -1,9 +1,11 @@
 # Cattle pangenome workshop: calling and phasing SVs, calculating population allele frequencies, and annotating variants.
 
+Permanent link for this page: [github.com/dib-lab/workshop_12Jan_2023](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/README.md)
+
+[![DOI](https://zenodo.org/badge/584564696.svg)](https://zenodo.org/badge/latestdoi/584564696)
 [![hackmd-github-sync-badge](https://hackmd.io/pSHf4JIJSJ2gKWMPRdr2_A/badge)](https://hackmd.io/pSHf4JIJSJ2gKWMPRdr2_A)
 
-
-Authors: Mostafa Shokrof, Mo Abuelanin, C. Titus Brown, and Tamer Mansour.
+Authors: Mostafa Shokrof, Mohamed Abuelanin, C. Titus Brown, and Tamer Mansour.
 
 Contact: Mostafa Shokrof <meshokrof@ucdavis.edu>
 
