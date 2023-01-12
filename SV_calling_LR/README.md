@@ -190,6 +190,7 @@ cat sample_table.csv
 ```
 to look at the contents; you should see:
 
+```
 >sample_name,sample_type,BioSample
 >ucd1.2,ref,SAMN03145444
 >ucd1.2_gff,gff,SAMN03145444
@@ -198,6 +199,7 @@ to look at the contents; you should see:
 >ERR5043144,hifi,SAMEA7765441
 >ERR7091271,ont,SAMEA7765441
 >cattle_taurus_10,graph,COHORT
+```
 
 The sample_type selects the workflow to execute - for example,
 incorrectly specifying ERR5043144 as hifi will change the mapping tool
@@ -213,6 +215,7 @@ cat subsample_table.csv
 
 You should see:
 
+```
 >sample_name,sample_type,BioSample
 >ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 >ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
@@ -224,6 +227,7 @@ You should see:
 >cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
 >cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
 >cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
+```
 
 ## 5.5 Make sure that configuration is correct
 
