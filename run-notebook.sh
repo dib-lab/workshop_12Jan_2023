@@ -1,7 +1,7 @@
 #! /bin/bash
 echo -e "starting Jupyter Lab... please wait!"
 jupyter lab --no-browser --ip "*" >& jupyter-session.out &
-sleep 6
+sleep 10
 
 
 node_id=$(hostname)
