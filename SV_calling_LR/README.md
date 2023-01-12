@@ -15,7 +15,7 @@ Contact: Mostafa Shokrof <meshokrof@ucdavis.edu>
 
 - 1pm - setup and introductions
 - 1:15pm - presentation and overview
-- 2:30pm - snakemake workflow and SV calling hands-on
+- 1:45pm - snakemake workflow and SV calling hands-on
 - 3:30pm - break until 3:45!
 - 3:45pm - snakemake workflow & notebook visualization hands-on
 
@@ -470,3 +470,12 @@ Let's complete the workflow to the end
 ```
 snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR5043144.hifi.pbmm2/merged.vcf.gz
 ```
+
+## 9 Notebook visualization hands-on [WORK-IN-PROGRESS]
+
+Run an Jupyter-lab in the browser
+
+```
+bash ~/workshop_12Jan_2023/run-notebook.sh
+```
+
