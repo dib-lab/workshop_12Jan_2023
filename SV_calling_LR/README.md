@@ -5,7 +5,7 @@
 
 Authors: Mostafa Shokrof, Mo Abuelanin, C. Titus Brown, and Tamer Mansour.
 
-Contact: Moustafa Shokrof <meshokrof@ucdavis.edu>
+Contact: Mostafa Shokrof <meshokrof@ucdavis.edu>
 
 [toc]
 
