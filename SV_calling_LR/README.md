@@ -83,49 +83,62 @@ were sent in an e-mail.
 Then, run a bash session on a compute node like so:
 
 ```
-srun  -p high2 -t 10:00:00 -c 8  --mem=30G --pty bash
+srun  -p high2 -t 6:00:00 -c 8  --mem=30G --pty bash
 ```
 
 This step creates a bash session and allocates 8 cores and 30GB RAM for it. 
 
 ## 5.1 Installing the environment
 
-1. clone this repo:
+1. Clone this repository into your account.
 
 ```
+cd ~/
 git clone https://github.com/dib-lab/workshop_12Jan_2023.git
 cd workshop_12Jan_2023/SV_calling_LR/
 ``` 
 
-2. create the conda environment and install the tools
+2. Install conda, create the conda environment, and install the tools
 
-@CTB fixme
+(If you are attending the PAG 2023 workshop, this step has already
+been done for you - it takes about 10 minutes.  You will need to do
+this step on your own cluster or machine, however.)
 
-We preinstalled the environments for you to save the workshop
-time. You **don't have** to install it again and rerun the following
-commands.
+First, install conda, either from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) or [here](https://github.com/conda-forge/miniforge).
+
+Then, install mamba and create an environment with all the tools:
 
 ```
-conda install mamba -n base -c conda-forge
+conda install mamba -y -n base -c conda-forge
 mamba env create -f envs.yaml
 conda activate cattle_sv
 ```
 
-All you need is to activate the conda environment
+3. Activate the conda environment.
+
+This makes all of the software accessible to you.
 
 ```
 conda activate cattle_sv
 ```
 
 
-3. Make sure that you can access the input files
+4. Make sure that you can access the input files
 
 ```
 ls -lh /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
 ```
 
+**Note:** If you are disconnected and log back in, you will need to run
+the following two commands:
 
-## 5.2 Edit config.yaml
+```
+cd workshop_12Jan_2023/SV_calling_LR/
+conda activate cattle_sv
+```
+in order to pick up where you left off!
+
+## 5.2 View config.yaml
 
 The workflow expects the list of input samples to be stored in
 `samples_table.csv` and `subsample_table.csv`; the overall configuration
@@ -219,9 +232,9 @@ Run the following command
 snakemake -np results/variants/annotated/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vep.vcf.gz
 ```
 
-This will print out all of the commands that snakemake would run,
-without actually running them. If there are any configuration problems,
-you will find out here!
+This will print out all of the commands that snakemake would run to
+generate that file, without actually running them. If there are any
+configuration problems, you will find out here!
 
 At this step you can run the entire workflow with one command
 "snakemake -j 8". However, we are going to run each step individually
