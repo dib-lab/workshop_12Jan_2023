@@ -75,12 +75,12 @@ for s in LRSamples:
                 plotNames.append("%s.%s.%s" % (s.sample_name, s.sample_type, mappingTool))
 
             newvcf = "%s%s/%s.%s.%s.phased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
-            vcfs.append(newvcf)
+            #vcfs.append(newvcf)
             mergeVCFs[s.sample_name]["files"].append(newvcf[:-3])
             mergeVCFs[s.sample_name]["names"].append(toolName)
 
             newvcf = "%s%s/%s.%s.%s.unphased.vcf.gz" % (outputFolder, toolName, s.sample_name, s.sample_type, mappingTool)
-            vcfs.append(newvcf)
+            #vcfs.append(newvcf)
             newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
             #vcfs.append(newvcf)
             for g in graphs:
