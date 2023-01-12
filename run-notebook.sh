@@ -1,6 +1,6 @@
 #! /bin/bash
 echo -e "starting Jupyter Lab... please wait!\n"
-jupyter-lab --no-browser --ip "*" --notebook-dir ~/ >& jupyter-session.out &
+jupyter-lab --no-browser --ip "*" >& jupyter-session.out &
 sleep 15
 
 
