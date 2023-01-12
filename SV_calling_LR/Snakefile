@@ -5,7 +5,7 @@ tempFolder = config["tempFolder"]
 outputFolder = config["outputFolder"]
 
 mappingTools = "pbmm2|minimap2|ngmlr|variants"
-
+9
 svCallingTools = config["svCallingTools"]
 
 vep_extra = config["vep"]["extra"]
@@ -57,7 +57,7 @@ callingNames=["svanalyzer"]
 
 for s in LRSamples:
     #    vcfs.append("%sSURVIVOR/%s.vcf.gz" % (outputFolder, s.sample_name))
-    vcfs.append("%ssvanalyzer/%s.vcf.gz" % (outputFolder, s.sample_name))
+    # vcfs.append("%ssvanalyzer/%s.vcf.gz" % (outputFolder, s.sample_name))
     mergeVCFs[s.sample_name]={
         "files":[],
         "names":[]
@@ -84,7 +84,7 @@ for s in LRSamples:
             newvcf = "%svariants/%s.%s.%s.vcf.gz" % (outputFolder, s.sample_name, s.sample_type, mappingTool)
             #vcfs.append(newvcf)
             for g in graphs:
-                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s.%s/merged.vcf.gz" % (g,toolName, s.sample_name, s.sample_type, mappingTool)
+                popVCF = outputFolder + "variants/GG/%s.%s.%s.%s.%s/merged.vep.vcf.gz" % (g,toolName, s.sample_name, s.sample_type, mappingTool)
                 vcfs.append(popVCF)
 
 callingNames= "|".join(callingNames)
@@ -96,7 +96,7 @@ def getBAM(wildcards, calling_tool):
     if calling_tool == "sniffles":
         if wildcards.phase == "unphased":
             return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
-        return "%smapping/%s.%s.%s.phased.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool, wildcards.phase)        
+        return "%smapping/%s.%s.%s.phased.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)        
         return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
     elif calling_tool == "clair3":
         return "%smapping/%s.%s.%s.bam" % (outputFolder, wildcards.sample, wildcards.tech, tool)
@@ -131,9 +131,11 @@ def logRule(wildcards, calling_function):
     return "sample_table.csv"
 
 
+vcfs=[vcfs[0]]
 rule all:
     input:
-        vcfs
+        expand(outputFolder+ "benchmarks/{sample}.txt",sample=sampleNames.split("|")),
+	vcfs
 
 
 rule minimap2_ONT:
