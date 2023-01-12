@@ -24,4 +24,4 @@ variants to facilitate studying the functional impact of the SVs.
 * Workflow is benchmarked on cattle data and achieving accuracy of ~ 90%.
 * Workflow is implemented using snakemake to make it simpler to run it afterward with your data and tweak it as you want.
 
-# Tutorial is in SV_calling_LR
+# Tutorial is in SV_calling_LR/
