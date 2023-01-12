@@ -204,6 +204,8 @@ to look at the contents; you should see:
 The sample_type selects the workflow to execute - for example,
 incorrectly specifying ERR5043144 as hifi will change the mapping tool
 to pbmm2 and will call SVs with cuteSV.
+N.B: NxB, ERR5043144, and ERR7091271 have the same biosample ID.
+
 
 
 ## 5.4 Configure subsamples with ` subsample_table.csv`
