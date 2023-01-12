@@ -12,4 +12,4 @@ echo -e "1) copy-paste the following command in your local terminal\n"
 GREEN='\033[0;32m'
 NOCOLOR='\033[0m'
 echo -e "${GREEN}ssh -L ${port}:${node_id}:${port} $USER@farm.cse.ucdavis.edu${NOCOLOR}\n"
-echo -e "2) In your internet browser, open the following URL ${GREEN}http://localhost:${port}"
+echo -e "2) In your internet browser, open the following URL ${GREEN}http://localhost:${port}${NOCOLOR}"
