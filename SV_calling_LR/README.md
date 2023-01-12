@@ -324,9 +324,9 @@ workflow (summarized in Figure 2) has the following steps:
 
 ### 7.1 Let's map the reads using minimap2
   
-First, let's look at how the workflow is going to map the ONT reads
+First, let's look at how the workflow mapped the ONT reads and calculted the mapping stastics
 ```
-snakemake -np results/mapping/ERR7091271.ont.minimap2.alfred.txt
+snakemake -np results/mapping/ERR7091271.ont.minimap2.alfred.txt -R minimap2_ONT
 ```
 
 Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/).
@@ -386,7 +386,6 @@ can produce phased SV when running on haplotagged long reads. I
 developed a hack for the other tools by splitting the bam files and
 calling SVs on each haplotype independently. After that, phased SVs
 are joined.
-
 
 ![sv_dag](https://github.com/dib-lab/workshop_12Jan_2023/blob/main/SV_calling_LR/sv_dag.png?raw=true)
 

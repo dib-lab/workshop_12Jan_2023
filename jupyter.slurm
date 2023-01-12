@@ -7,7 +7,6 @@
 #SBATCH -t 02-00:00:00        # ask for 2 days
 #SBATCH --mem=20000           # memory (20,000 mb = 20gb)
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=mabuelanin@gmail.com
 
 # initialize conda
 . ~/miniconda3/etc/profile.d/conda.sh
