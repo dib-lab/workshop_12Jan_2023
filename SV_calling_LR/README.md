@@ -324,9 +324,9 @@ workflow (summarized in Figure 2) has the following steps:
 
 ### 7.1 Let's map the reads using minimap2
   
-First, let's look at how the workflow is going to map the ONT reads
+First, let's look at how the workflow mapped the ONT reads and calculted the mapping stastics
 ```
-snakemake -np results/mapping/ERR7091271.ont.minimap2.alfred.txt
+snakemake -np results/mapping/ERR7091271.ont.minimap2.alfred.txt -R minimap2_ONT
 ```
 
 Let's check the quality of the mapping by looking at mapping statistics calculated by [alfredqc](https://www.gear-genomics.com/docs/alfred/).
