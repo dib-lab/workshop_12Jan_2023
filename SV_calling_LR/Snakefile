@@ -550,7 +550,7 @@ rule annotate_variants_VEP:
         outputFolder + "variants/annotated/{graph}.{callingTool}.{sample}.{tech}.{mapping}/log"
     threads: 4
     wrapper:
-        "0.74.0/bio/vep/annotate"
+        "v1.21.2/bio/vep/annotate"
 
 
 # Pass a list of plugins to use, see https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
