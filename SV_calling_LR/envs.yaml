@@ -24,3 +24,6 @@ dependencies:
  - survivor=1.0.7
  - svanalyzer=0.36
  - samplot
+ - pip
+ - pip:
+   - hail
