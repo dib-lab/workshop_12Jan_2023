@@ -411,13 +411,25 @@ let's take a peek at the result file:
 gzip -dc results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz  |grep -vP "^#" |head
 ```
 
-or check the high-frequency variants:
+or check the 
+quency variants:
 ```
 bcftools view  -q 0.9 results/variants/GG/cattle_taurus_10.cuteSV.ERR7091271.ont.minimap2/merged.vcf.gz |grep -vP "^#" |head
 ```
-You could use these high-frequency variants for, e.g. making pangenomes or detecting missasemblies or rare variants in the reference sample that shouldnt be included.
+You could use these high-frequency variants for making pangenomes or detecting missasemblies or rare variants in the reference sample that shouldn't be included.
 
 ## 8 Analysis of Pacbio hifi reads (ERR5043144) 
+
+### WORKSHOP UPDATE:
+
+:::warning
+Please run:
+```
+git pull
+snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cuteSV.ERR5043144.hifi.pbmm2/merged.vcf.gz
+```
+:::
+### and then we continue
 
 Here we are going to run a very similar workflow with a few adjustments:
 1. pbmm2 is used instead of minimap2
@@ -472,7 +484,39 @@ snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cute
 On your farm account, execute the following command:
 
 ```bash
+# make sure we're in `cattle_sv`
+conda activate cattle_sv
+
+# update the repository
+git pull
+
+# copy output into the current directory
+cp ~mshokrof/workshop_12Jan_2023_data/samples.csv .
+cp ~mshokrof/workshop_12Jan_2023_data/final.* .
+cp ~mshokrof/workshop_12Jan_2023_data/ERR7091271.ont.minimap2.phased.vep.vcf.gz .
+
+# install hail
+pip install hail
+
+
+# run Jupyter Notebook.
 bash ../run-notebook.sh
 ```
 
-This will print an `ssh` command you should execute on your local machine terminal. Wait for a few seconds, and copy-paste the printed URL in your browser.
+This will print an `ssh` command you should execute on your local machine's terminal. Wait for a few seconds, then copy-paste the printed URL in your browser.
+
+
+You should now see JupyterLab in your browser, with folders and documents on the left hand side of the screen. Double-click on the `DownstreamAnalysis.ipynb` file to open the Downstream Analysis notebook.
+
+
+:::info 
+**Working in Jupyter**
+
+Jupyter notebooks provide the ability to interactively run commands and see rendered plots. This notebook contains a set of commands to assess and plot our results.
+
+In the workshop, we'll run each bit of code as we go. To run a code cell, click into that cell and either click the 'play' button at the top of the notebook, or press `Shift` and `Enter` together to execute that code. At home, you can use the `Run` menu at the top left to run part or all of the notebook at once.
+
+Note: While the default coding language in this notebook is python, cells with `%%bash` at the top can be used to run shell commands.
+:::
+
+
