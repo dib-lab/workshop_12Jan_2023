@@ -147,7 +147,7 @@ conda activate cattle_sv
 ## Replace this path to be the path of the input data on your machine
 data="/home/tahmed/public_html/workshop_pangenomics_12Jan_2023/data"
 
-for f in SV_calling_LR/{Snakefile,config.yaml,subsample_table.csv.example,DownstreamAnalysis.ipynb};do
+for f in ./{Snakefile,config.yaml,subsample_table.csv.example,DownstreamAnalysis.ipynb};do
   sed -i "s|your_path_to_the_data/|$data/|" $f;
 done
 ```
@@ -456,10 +456,28 @@ snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cute
 
 ## 9 Notebook visualization hands-on [WORK-IN-PROGRESS]
 
-On your farm account, execute the following command:
-
+1. copy output into the current directory
 ```bash
-bash ../run-notebook.sh
+cp $data/samples.csv .
+cp $data/final.* .
+#cp $data/ERR7091271.ont.minimap2.phased.vep.vcf.gz .
 ```
 
-This will print an `ssh` command you should execute on your local machine terminal. Wait for a few seconds, and copy-paste the printed URL in your browser.
+2. install jupyterlab
+```bash
+install -c conda-forge jupyterlab
+```
+
+3. start the jupyterlab
+```bash
+jupyter-lab --no-browser --ip "*" >& jupyter-session.out
+```
+
+If you are running the jupyterlab on a headless server, run this command **locally** in a seperate terminal
+```bash
+ssh -L 8888:${node_id}:8888 $USER@$serverAddress
+```
+
+4. open the `jupyter-session.out` file to copy the appropriate link. You should now see JupyterLab in your browser, with folders and documents on the left hand side of the screen. Double-click on the DownstreamAnalysis.ipynb file to open the Downstream Analysis notebook.
+
+
