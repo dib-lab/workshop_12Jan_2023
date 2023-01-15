@@ -220,7 +220,7 @@ clair3Models={
     "ont": "r941_prom_hac_g360+g422"
 }
 
-cacheFolder="/home/mshokrof/workshop_12Jan_2023_data/"
+cacheFolder="your_path_to_the_data/"
 rule clair3:
     input:
         bam=lambda wildcards: getBAM(wildcards,"clair3"),

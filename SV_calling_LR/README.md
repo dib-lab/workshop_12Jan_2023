@@ -77,7 +77,7 @@ Ref:  Mahmoud M, Gobet N, Cruz-Dávalos DI, Mounier N, Dessimoz C, Sedlazeck FJ.
 
 Test input data for the workshop is available on farm at:
 ```
-/home/mshokrof/workshop_12Jan_2023_data/
+https://farm.cse.ucdavis.edu/~tahmed/workshop_pangenomics_12Jan_2023
 ```
 
 The following table describes the test input file:
@@ -98,18 +98,10 @@ We created a downsampled the data for the sake of this workshop. We
 are going to focus on chromsome 25 only, and we are going to calculate
 the AF in 30 samples (but we can scale to 4000 samples).
 
-## 5) Logging in and configuring environment and software
 
-Log into `farm.cse.ucdavis.edu` with ssh, using the username (`datalab-XX`) and password you
-were sent in an e-mail.
+## 5) Configuring environment and software
 
-Then, start a bash session on a compute node like so:
-
-```
-srun  -p high2 -t 6:00:00 -c 8  --mem=30G --pty bash
-```
-
-This step creates a bash session and allocates 8 cores and 30GB RAM for 6 hours. 
+This tutorial was designed to run on a linux machine with 8 cores and 30GB RAM. 
 
 ### 5.1 Installing the environment
 
@@ -119,6 +111,7 @@ This step creates a bash session and allocates 8 cores and 30GB RAM for 6 hours.
 cd ~/
 git clone https://github.com/dib-lab/workshop_12Jan_2023.git
 cd workshop_12Jan_2023/SV_calling_LR/
+git checkout data_access
 ``` 
 
 2. Install conda, create the conda environment, and install the tools
@@ -148,23 +141,17 @@ conda activate cattle_sv
 ```
 
 
-4. Make sure that you can access the input files
+4. Download the input files on your machine and define this path. Then update the tutorials' scripts accrodingly.
 
 ```
-ls -lh /home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
+## Replace this path to be the path of the input data on your machine
+data="/home/tahmed/public_html/workshop_pangenomics_12Jan_2023/data"
+
+for f in SV_calling_LR/{Snakefile,config.yaml,subsample_table.csv.example,DownstreamAnalysis.ipynb};do
+  sed -i "s|your_path_to_the_data/|$data/|" $f;
+done
 ```
 
-:::info
-**Note:** If you are disconnected and log back in, you will need to run
-the following three commands:
-
-```
-srun  -p high2 -t 6:00:00 -c 8  --mem=30G --pty bash
-cd workshop_12Jan_2023/SV_calling_LR/
-conda activate cattle_sv
-```
-in order to pick up where you left off!
-:::
 ### 5.2 View config.yaml
 
 The workflow expects the list of input samples to be stored in
@@ -246,16 +233,16 @@ You should see:
 
 ```
 sample_name,sample_type,BioSample
-ucd1.2,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.fa
-ucd1.2_rmsk,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
-ucd1.2_gff,/home/mshokrof/workshop_12Jan_2023_data/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
-NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.bed.gz
-NxB,/home/mshokrof/workshop_12Jan_2023_data/goldstandard/callset_filered.25.vcf.gz
-ERR5043144,/home/mshokrof/workshop_12Jan_2023_data/ERR5043144.chr25.fastq.gz
-ERR7091271,/home/mshokrof/workshop_12Jan_2023_data/ERR7091271.chr25.fastq.gz
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.dbg
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/graph.desc.tsv
-cattle_taurus_10,/home/mshokrof/workshop_12Jan_2023_data/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
+ucd1.2,the_path_you_defined_on_your_machine/ARS-UCD1.2_Btau5.0.1Y.25.fa
+ucd1.2_rmsk,the_path_you_defined_on_your_machine/ARS-UCD1.2_Btau5.0.1Y.25.rmsk.bed.gz
+ucd1.2_gff,the_path_you_defined_on_your_machine/ARS-UCD1.2_Btau5.0.1Y.25.gff.gz
+NxB,the_path_you_defined_on_your_machine/goldstandard/callset_filered.25.bed.gz
+NxB,the_path_you_defined_on_your_machine/goldstandard/callset_filered.25.vcf.gz
+ERR5043144,the_path_you_defined_on_your_machine/ERR5043144.chr25.fastq.gz
+ERR7091271,the_path_you_defined_on_your_machine/ERR7091271.chr25.fastq.gz
+cattle_taurus_10,the_path_you_defined_on_your_machine/cohortGraphs/taurus_10/graph.dbg
+cattle_taurus_10,the_path_you_defined_on_your_machine/cohortGraphs/taurus_10/graph.desc.tsv
+cattle_taurus_10,the_path_you_defined_on_your_machine/cohortGraphs/taurus_10/annotation.relaxed.row_diff_int_brwt.annodbg
 ```
 
 ### 5.5 Make sure that the configuration is valid
