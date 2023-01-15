@@ -465,7 +465,7 @@ cp $data/final.* .
 
 2. install jupyterlab
 ```bash
-install -c conda-forge jupyterlab
+mamba install -c conda-forge jupyterlab
 ```
 
 3. start the jupyterlab
