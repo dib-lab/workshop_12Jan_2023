@@ -460,7 +460,7 @@ snakemake  --use-conda -p -j 8  results/variants/annotated/cattle_taurus_10.cute
 ```bash
 cp $data/samples.csv .
 cp $data/final.* .
-#cp $data/ERR7091271.ont.minimap2.phased.vep.vcf.gz .
+cp $data/ERR7091271.ont.minimap2.phased.vep.vcf.gz .
 ```
 
 2. install jupyterlab
